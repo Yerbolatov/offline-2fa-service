@@ -1,2 +1,5 @@
-# offline-2fa-service
-Self-hosted two-factor authentication web service for isolated (air-gapped) corporate networks. Diploma project.
+# Оффлайн сервис двухфакторной аутентификации
+Веб-сервис двухфакторной аутентификации для самостоятельного развёртывания в изолированных (отключённых от интернета) корпоративных сетях. Дипломный проект.
+
+
+[Ссылка на Youtrack](https://offline2fa.youtrack.cloud/issues/2FA)
