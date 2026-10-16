@@ -1,0 +1,41 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+secrets/
+
+# Local databases and runtime data
+*.db
+*.sqlite
+*.sqlite3
+data/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Node.js and build output
+node_modules/
+dist/
+build/
+.next/
+coverage/
+
+# IDE and OS files
+.vscode/*
+!.vscode/settings.example.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
