@@ -1,0 +1,209 @@
+<mxfile host="app.diagrams.net" agent="offline-2fa-service" pages="3">
+  <diagram id="context" name="System Context">
+    <mxGraphModel dx="1414" dy="743" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="boundary" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=2;strokeColor=#1f4e79;fillColor=#eaf3f8;fontStyle=1;verticalAlign=top;spacingTop=10;" value="ISOLATED CORPORATE NETWORK (LAN — no Internet egress)" vertex="1">
+          <mxGeometry height="600" width="1080" x="30" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=2;strokeColor=#0b6e4f;fillColor=#d9ead3;fontStyle=1;" value="Offline 2FA Service&#xa;FastAPI + SQLite&#xa;REST API / Web UI" vertex="1">
+          <mxGeometry height="110" width="250" x="450" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="apps" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#674ea7;fillColor=#e4d9f5;" value="Internal applications&#xa;and reverse proxy" vertex="1">
+          <mxGeometry height="80" width="180" x="850" y="245" as="geometry" />
+        </mxCell>
+        <mxCell id="ntp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="Internal NTP" vertex="1">
+          <mxGeometry height="60" width="160" x="800" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="ca" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="Internal CA&#xa;TLS certificates" vertex="1">
+          <mxGeometry height="60" width="160" x="800" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="internet" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#cc0000;fillColor=#f4cccc;fontStyle=1;" value="Internet&#xa;NO CONNECTION" vertex="1">
+          <mxGeometry height="80" width="170" x="1160" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=block;html=1;" target="service" value="HTTPS / login / TOTP">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="310" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=block;html=1;" target="service" value="HTTPS / admin operations">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="510" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="apps" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=block;html=1;" target="service" value="REST / forward-auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="ntp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=block;html=1;" target="service" value="time sync">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="ca" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=block;html=1;" target="service" value="trust anchor">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="boundary" style="dashed=1;strokeColor=#cc0000;endArrow=none;html=1;" target="internet" value="blocked egress">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VCgI80yHQLCiaMcrOGYD-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Employee&lt;br&gt;Uses Authethicator App" vertex="1">
+          <mxGeometry height="30" width="150" x="60" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="VCgI80yHQLCiaMcrOGYD-2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Administrator" vertex="1">
+          <mxGeometry height="30" width="60" x="130" y="500" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="usecases" name="Use Cases">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ucboundary" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;strokeWidth=2;strokeColor=#1f4e79;fillColor=#f5f9fc;fontStyle=1;verticalAlign=top;spacingTop=10;" value="Offline 2FA Service" vertex="1">
+          <mxGeometry height="650" width="800" x="260" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="login" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#0b6e4f;fillColor=#d9ead3;" value="Login with password + TOTP&#xa;[FR-001..FR-005]" vertex="1">
+          <mxGeometry height="70" width="260" x="350" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="enroll" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#0b6e4f;fillColor=#d9ead3;" value="Enable 2FA / QR enrollment&#xa;[FR-003]" vertex="1">
+          <mxGeometry height="70" width="260" x="680" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="recovery" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#0b6e4f;fillColor=#d9ead3;" value="Use one-time recovery code&#xa;[FR-006]" vertex="1">
+          <mxGeometry height="70" width="260" x="350" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="forward" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#674ea7;fillColor=#e4d9f5;" value="Authorize request&#xa;via forward-auth [API-003]" vertex="1">
+          <mxGeometry height="70" width="260" x="680" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="reset" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="Reset user 2FA device&#xa;[FR-009]" vertex="1">
+          <mxGeometry height="70" width="260" x="350" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="audit" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="View audit log&#xa;[SEC-006]" vertex="1">
+          <mxGeometry height="70" width="260" x="680" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="manage" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="Manage users and roles&#xa;[FR-008..FR-010]" vertex="1">
+          <mxGeometry height="70" width="260" x="515" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="ue1" edge="1" parent="1" style="endArrow=none;html=1;" target="login">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="263.8888888888889" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ue2" edge="1" parent="1" style="endArrow=none;html=1;" target="enroll">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="271.59420289855075" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ue3" edge="1" parent="1" style="endArrow=none;html=1;" target="recovery">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="280.55555555555554" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae1" edge="1" parent="1" style="endArrow=none;html=1;" target="reset">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="538.3333333333333" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae2" edge="1" parent="1" style="endArrow=none;html=1;" target="audit">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="543.913043478261" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae3" edge="1" parent="1" style="endArrow=none;html=1;" target="manage">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="552.6666666666667" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="appe" edge="1" parent="1" style="endArrow=none;html=1;" target="forward">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1120" y="332.3611111111111" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Kvi_XYI2SFVWMQeVAJGB-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Employee" vertex="1">
+          <mxGeometry height="30" width="60" x="90" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="Kvi_XYI2SFVWMQeVAJGB-2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Administrator" vertex="1">
+          <mxGeometry height="30" width="60" x="90" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="Kvi_XYI2SFVWMQeVAJGB-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Internal Application" vertex="1">
+          <mxGeometry height="30" width="60" x="1130" y="320" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="components" name="Component Draft">
+    <mxGraphModel dx="1414" dy="743" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="api" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1f4e79;fillColor=#d9eaf7;fontStyle=1;" value="API layer&#xa;REST + OpenAPI" vertex="1">
+          <mxGeometry height="80" width="220" x="80" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="web" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#1f4e79;fillColor=#d9eaf7;" value="Web interfaces&#xa;user + admin" vertex="1">
+          <mxGeometry height="80" width="220" x="80" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="fa" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#674ea7;fillColor=#e4d9f5;" value="Forward-auth&#xa;proxy adapter" vertex="1">
+          <mxGeometry height="80" width="220" x="80" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="auth" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0b6e4f;fillColor=#d9ead3;" value="Authentication service&#xa;password + session + RBAC" vertex="1">
+          <mxGeometry height="100" width="250" x="400" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="totp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0b6e4f;fillColor=#d9ead3;" value="TOTP module&#xa;RFC 6238 + replay check&#xa;rate limiting" vertex="1">
+          <mxGeometry height="100" width="250" x="400" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="crypto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="Cryptography module&#xa;Argon2id + AES-256-GCM&#xa;external key" vertex="1">
+          <mxGeometry height="100" width="250" x="720" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="auditc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="Audit service&#xa;append-only events" vertex="1">
+          <mxGeometry height="80" width="250" x="450" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="db" parent="1" style="shape=cylinder;whiteSpace=wrap;html=1;strokeColor=#555555;fillColor=#eeeeee;" value="SQLite database&#xa;users, roles, sessions&#xa;encrypted TOTP ciphertext&#xa;hashed recovery codes&#xa;audit records" vertex="1">
+          <mxGeometry height="130" width="250" x="930" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="key" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#cc0000;fillColor=#f4cccc;" value="External key store&#xa;not in database/repository" vertex="1">
+          <mxGeometry height="80" width="220" x="1120" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="ntp2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="Internal NTP" vertex="1">
+          <mxGeometry height="60" width="220" x="1110" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="ca2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#b45f06;fillColor=#fce5cd;" value="Internal CA / HTTPS" vertex="1">
+          <mxGeometry height="60" width="220" x="460" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" edge="1" parent="1" source="api" style="endArrow=block;html=1;" target="auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" edge="1" parent="1" source="web" style="endArrow=block;html=1;" target="auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" edge="1" parent="1" source="fa" style="endArrow=block;html=1;" target="auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" edge="1" parent="1" source="auth" style="endArrow=block;html=1;" target="totp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" edge="1" parent="1" source="auth" style="endArrow=block;html=1;" target="crypto">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" edge="1" parent="1" source="auth" style="endArrow=block;html=1;" target="auditc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" edge="1" parent="1" source="totp" style="endArrow=block;html=1;" target="crypto">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" edge="1" parent="1" source="crypto" style="endArrow=block;html=1;" target="db" value="encrypted data / hashes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" edge="1" parent="1" source="auditc" style="endArrow=block;html=1;" target="db" value="audit events">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c10" edge="1" parent="1" source="key" style="endArrow=block;html=1;" target="crypto" value="key read at runtime">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" edge="1" parent="1" source="ntp2" style="endArrow=block;html=1;" target="totp" value="time">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c12" edge="1" parent="1" source="ca2" style="endArrow=block;html=1;" target="api" value="TLS trust">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
