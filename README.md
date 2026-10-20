@@ -113,7 +113,8 @@ WebAuthn/FIDO2, OIDC, LDAP/Active Directory, RADIUS и экспорт журна
 - [Сравнение технологий](docs/literature-review/technologies.md)
 - [Архитектура и диаграммы](docs/architecture/architecture.md)
 - [Архитектурные решения (ADR)](docs/architecture/adr/)
-- [HTML-прототип сервиса](docs/prototype/serviceprototype.html)
+- [Открыть HTML-прототип в браузере](https://yerbolatov.github.io/offline-2fa-service/prototype/serviceprototype.html)
+- [Исходный файл прототипа](docs/prototype/serviceprototype.html)
 
 ## Структура репозитория
 
