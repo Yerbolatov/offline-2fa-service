@@ -105,6 +105,7 @@ WebAuthn/FIDO2, OIDC, LDAP/Active Directory, RADIUS и экспорт журна
 
 - [Спецификация требований](docs/requirements/requirements.md)
 - [План верификации и оценки](docs/verification/plan.md)
+- [План управления проектом и риски](docs/management/plan-and-risks.md)
 - [Библиография](docs/references.md)
 - [Таблица анализа источников](docs/literature-review/sources-table.md)
 - [Критический обзор литературы](docs/literature-review/review.md)
