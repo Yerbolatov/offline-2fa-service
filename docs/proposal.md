@@ -11,7 +11,7 @@ Development of a web service with local two-factor authentication for isolated c
 | Role | Name | Division / Group |
 |---|---|---|
 | Student, author and developer | Yerbolatov Ali | SE-2401 |
-| Head | Myrzakhmetov Almas | School of Software Engineering |
+| Supervisor | Myrzakhmetov Almas | School of Software Engineering |
 
 ## 3. Problem statement
 
