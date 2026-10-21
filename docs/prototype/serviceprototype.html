@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Offline 2FA Service — прототип</title>
+<title>Offline 2FA Service — Prototype</title>
 <style>
 :root{--bg:#f3f5f9;--card:#fff;--ink:#16233b;--mut:#5b667a;--line:#d9dfe9;--navy:#14285a;--navyink:#fff;--ok:#1f8a4c;--okbg:#e4f4ea;--err:#c62b2b;--errbg:#fbe9e9;--acc:#1f4fd8;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
@@ -58,108 +58,110 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 </style>
 </head>
 <body>
-<nav class="proto" aria-label="Экраны прототипа"></nav>
+<nav class="proto" aria-label="Prototype navigation"></nav>
 <main class="app">
 
-<section class="screen" id="s1" data-title="01 Вход" data-req="FR-001, FR-002, API-005, SEC-001, SEC-005">
-<div class="hdr"><b>Offline 2FA Service</b><span>Внутренняя сеть</span></div>
+<section class="screen" id="s1" data-title="01 Sign in" data-req="FR-001, FR-002, API-005, SEC-001, SEC-005">
+<div class="hdr"><b>Offline 2FA Service</b><span>Internal Network</span></div>
 <div class="body"><div class="center">
-<h1>Вход в систему</h1><p class="s">Введите данные учётной записи</p>
-<label for="lg">Логин</label><input type="text" id="lg" autocomplete="username" value="a.yerbolatov">
-<label for="pw">Пароль</label><input type="password" id="pw" autocomplete="current-password" value="demo-password">
-<div class="row"><button class="btn" id="go1">Продолжить</button><button class="btn ghost" id="showpw" type="button">Показать пароль</button></div>
-<div class="msg err" id="e1" hidden>Неверный логин или пароль</div>
-<p class="note">После проверки пароля будет запрошен TOTP-код. Чтобы увидеть ошибку, очистите поле пароля.</p>
+<h1>Log In</h1><p class="s">Enter your account information</p>
+<label for="lg">Username</label><input type="text" id="lg" autocomplete="username" value="a.yerbolatov">
+<label for="pw">Password</label><input type="password" id="pw" autocomplete="current-password" value="demo-password">
+<div class="row"><button class="btn" id="go1">Continue</button><button class="btn ghost" id="showpw" type="button">Show password</button></div>
+<div class="msg err" id="e1" hidden>Incorrect username or password</div>
+<p class="note">After verifying your password, you'll be asked for a TOTP code. To see the error, clear the password field.</p>
 </div></div>
 </section>
 
-<section class="screen" id="s2" data-title="02 Подключение 2FA" data-req="FR-003, SEC-002, NFR-001, NFR-004">
-<div class="hdr"><b>Offline 2FA Service</b><span>Шаг 1 из 2</span></div>
+<section class="screen" id="s2" data-title="02 2FA connection" data-req="FR-003, SEC-002, NFR-001, NFR-004">
+<div class="hdr"><b>Offline 2FA Service</b><span>step 1 out of 2</span></div>
 <div class="body"><div class="center">
-<h1>Подключение двухфакторной аутентификации</h1>
-<p class="s">1. Откройте FreeOTP, Aegis или другое приложение-аутентификатор.<br>2. Отсканируйте QR-код.</p>
-<div class="qr" role="img" aria-label="Демонстрационный QR-код">QR DEMO CODE<br>DEMO ONLY</div>
-<label>Секрет</label><input type="text" readonly value="DEMO-ONLY-NOT-A-REAL-SECRET" aria-label="Секрет (демо)">
-<div class="row"><button class="btn ghost" id="cp">Скопировать</button><button class="btn" id="go2">Далее</button></div>
-<div class="msg ok" id="cpm" hidden>Секрет скопирован</div>
+<h1>Setting Up Two-Factor Authentication</h1>
+<p class="s">1. Open FreeOTP, Aegis, or another authentication app.<br>2. Scan the QR code.</p>
+<div class="qr" role="img" aria-label="Sample QR Code">QR<br>DEMO</div>
+<label>Secret</label><input type="text" readonly value="DEMO-ONLY-NOT-A-REAL-SECRET" aria-label="Secret (demo)">
+<div class="row"><button class="btn ghost" id="cp">Copy secret</button><button class="btn" id="go2">Continue</button></div>
+<div class="msg ok" id="cpm" hidden>The secret has been copied</div>
 </div></div>
 </section>
 
-<section class="screen" id="s3" data-title="03 Подтверждение TOTP" data-req="FR-004, FR-005, FR-006, SEC-004, SEC-005">
-<div class="hdr"><b>Offline 2FA Service</b><span>Второй фактор</span></div>
+<section class="screen" id="s3" data-title="03 TOTP confirmation" data-req="FR-004, FR-005, FR-006, SEC-004, SEC-005">
+<div class="hdr"><b>Offline 2FA Service</b><span>Second Factor</span></div>
 <div class="body"><div class="center" style="text-align:center">
-<h1>Подтвердите код</h1><p class="s">Введите код из приложения-аутентификатора</p>
+<h1>Confirm the code</h1><p class="s">Enter the code from the authenticator app</p>
 <div class="code" id="digits"></div>
-<p class="s" id="tm">Осталось времени: 00:21</p>
-<div class="row" style="justify-content:center"><button class="btn" id="go3">Подтвердить</button></div>
-<div class="row" style="justify-content:center"><button class="btn ghost" id="bk">Использовать резервный код</button></div>
-<div class="msg err" id="e3" hidden>Код неверен или уже использован</div>
-<p class="note">Введите любые 6 цифр для успешного входа; пустые поля покажут ошибку.</p>
+<p class="s" id="tm">Time remaining: 00:21</p>
+<div class="row" style="justify-content:center"><button class="btn" id="go3">Verify</button></div>
+<div class="row" style="justify-content:center"><button class="btn ghost" id="bk">Use a recovery code</button></div>
+<div class="msg err" id="e3" hidden>The code is incorrect or has already been used</div>
+<p class="note">Enter any 6 digits to log in successfully; empty fields will result in an error.</p>
 </div></div>
 </section>
 
-<section class="screen" id="s4" data-title="04 Резервные коды" data-req="FR-006, SEC-003, SEC-007">
-<div class="hdr"><b>Резервные коды восстановления</b><span>Закрыть доступно после сохранения</span></div>
+<section class="screen" id="s4" data-title="04 Recovery codes" data-req="FR-006, SEC-003, SEC-007">
+<div class="hdr"><b>Backup Recovery Codes</b><span>“Close” is available after saving</span></div>
 <div class="body">
-<p class="s">Сохраните эти коды в защищённом месте. Каждый код можно использовать только один раз. После закрытия полный список больше не отображается.</p>
+<p class="s">Keep these codes in a safe place. Each code can be used only once. Once you close this window, the full list will no longer be displayed.</p>
 <div class="codes"><div>A7K4-M2Q9</div><div>P3X8-L6R1</div><div>V5N2-H8T4</div><div>Q9C6-W1E7</div><div>K4D8-Z2P5</div><div>H6M3-T9Y1</div><div>R8F5-B7N2</div><div>L1Q4-S6C8</div></div>
-<div class="row"><button class="btn ghost" id="dl">Скачать TXT</button><button class="btn ghost" onclick="window.print()">Печать</button><button class="btn ok" id="go4">Я сохранил коды</button></div>
-<p class="note">Доступно кодов: 8</p>
-<div class="msg ok" id="m4" hidden>Загрузка TXT доступна в рабочей версии</div>
+<div class="row"><button class="btn ghost" id="dl">Download TXT</button><button class="btn ghost" onclick="window.print()">Print</button><button class="btn ok" id="go4">I saved the codes</button></div>
+<p class="note">Codes available: 8</p>
+<div class="msg ok" id="m4" hidden>TXT upload is available in the working version</div>
 </div>
 </section>
 
-<section class="screen" id="s5" data-title="05 Панель администратора" data-req="FR-008, FR-009, FR-010, SEC-006, SEC-008">
-<div class="hdr"><b>Offline 2FA Service · Панель администратора</b><span><a href="#" id="logout" style="color:inherit">Выйти</a></span></div>
+<section class="screen" id="s5" data-title="05 Administration Panel" data-req="FR-008, FR-009, FR-010, SEC-006, SEC-008">
+<div class="hdr"><b>Offline 2FA Service · Administration Panel</b><span><a href="#" id="logout" style="color:inherit">Logout</a></span></div>
 <div class="body">
-<div class="tabs"><span>Обзор</span><span class="on">Пользователи</span><span class="go-audit" style="cursor:pointer">Аудит</span><span>Настройки</span></div>
-<div class="row" style="justify-content:space-between;margin:0 0 10px"><h2 style="margin:0">Пользователи</h2><button class="btn">+ Добавить</button></div>
+<div class="tabs"><span>Overview</span><span class="on">Users</span><span class="go-audit" style="cursor:pointer">Audit</span><span>Settings</span></div>
+<div class="row" style="justify-content:space-between;margin:0 0 10px"><h2 style="margin:0">Users</h2><button class="btn">+ Add</button></div>
 <div class="tw"><table>
-<tr><th>Логин</th><th>Роль</th><th>2FA</th><th>Статус</th><th>Действия</th></tr>
-<tr><td>a.yerbolatov</td><td>user</td><td><span class="tag ok">Включена</span></td><td>Активен</td><td><button class="btn ghost" data-reset="a.yerbolatov">Сбросить 2FA</button></td></tr>
-<tr><td>user2</td><td>user</td><td><span class="tag no">Не включена</span></td><td>Активен</td><td><button class="btn ghost">Подключить</button></td></tr>
-<tr><td>admin</td><td>admin</td><td><span class="tag ok">Включена</span></td><td>Активен</td><td><button class="btn ghost">Заблокировать</button></td></tr>
+<tr><th>Username</th><th>Password</th><th>2FA</th><th>Status</th><th>Actions</th></tr>
+<tr><td>a.yerbolatov</td><td>user</td><td><span class="tag ok">Enabled</span></td><td>Active</td><td><button class="btn ghost" data-reset="a.yerbolatov">Reset 2FA</button></td></tr>
+<tr><td>user2</td><td>user</td><td><span class="tag no">Disabled</span></td><td>Active</td><td><button class="btn ghost">Connect</button></td></tr>
+<tr><td>admin</td><td>admin</td><td><span class="tag ok">Enabled</span></td><td>Active</td><td><button class="btn ghost">Block</button></td></tr>
 </table></div>
-<div class="msg ok" id="last">Последнее событие: сброс 2FA для a.yerbolatov выполнен 2026-10-20 15:40</div>
+<div class="msg ok" id="last">Latest event: 2FA reset for a.yerbolatov completed on 2026-10-20 at 15:40</div>
 </div>
 </section>
 
-<section class="screen" id="s6" data-title="06 Журнал аудита" data-req="SEC-006, SEC-007, FR-010">
-<div class="hdr"><b>Журнал аудита</b><span><a href="#" id="back6" style="color:inherit">К пользователям</a></span></div>
+<section class="screen" id="s6" data-title="06 Audit log" data-req="SEC-006, SEC-007, FR-010">
+<div class="hdr"><b>Audit Log</b><span><a href="#" id="back6" style="color:inherit">To users</a></span></div>
 <div class="body">
-<div class="row" style="margin:0 0 12px"><select aria-label="Тип события" style="padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)"><option>Все события</option></select><button class="btn ghost">Найти</button><button class="btn ghost">Экспорт</button><button class="btn ghost">Обновить</button></div>
+<div class="row" style="margin:0 0 12px"><select aria-label="Event Type" style="padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)"><option>All events</option></select><button class="btn ghost">Find</button><button class="btn ghost">Export</button><button class="btn ghost">Refresh</button></div>
 <div class="tw"><table id="aud">
-<tr><th>Время</th><th>Событие</th><th>Actor</th><th>Результат</th></tr>
-<tr><td>20.10 15:40</td><td>TOTP_RESET</td><td>admin</td><td><span class="tag ok">Успешно</span></td></tr>
-<tr><td>20.10 15:38</td><td>LOGIN_FAILURE</td><td>a.yerbolatov</td><td><span class="tag no">Отклонено</span></td></tr>
-<tr><td>20.10 15:35</td><td>TOTP_ENROLL</td><td>a.yerbolatov</td><td><span class="tag ok">Успешно</span></td></tr>
-<tr><td>20.10 15:30</td><td>LOGIN_SUCCESS</td><td>a.yerbolatov</td><td><span class="tag ok">Успешно</span></td></tr>
+<tr><th>Time</th><th>Event</th><th>Result</th><th></th></tr>
+<tr><td>20.10 15:40</td><td>TOTP_RESET</td><td>admin</td><td><span class="tag ok">Successful</span></td></tr>
+<tr><td>20.10 15:38</td><td>LOGIN_FAILURE</td><td>a.yerbolatov</td><td><span class="tag no">Rejected</span></td></tr>
+<tr><td>20.10 15:35</td><td>TOTP_ENROLL</td><td>a.yerbolatov</td><td><span class="tag ok">Successful</span></td></tr>
+<tr><td>20.10 15:30</td><td>LOGIN_SUCCESS</td><td>a.yerbolatov</td><td><span class="tag ok">Successful</span></td></tr>
 </table></div>
-<p class="note">Записи доступны только для чтения и не содержат секретов.</p>
+<p class="note">The records are read-only and do not contain any confidential information.</p>
 </div>
 </section>
 
-<section class="screen" id="s7" data-title="Взаимодействие" data-req="API-001, API-002, API-003, API-004">
-<div class="hdr"><b>Взаимодействие с сервисом</b><span>Изолированная корпоративная сеть</span></div>
+<section class="screen" id="s7" data-title="Interaction" data-req="API-001, API-002, API-003, API-004">
+<div class="hdr"><b>Interaction with the Service</b><span>Isolated corporate network</span></div>
 <div class="body">
-<h1>Сценарии взаимодействия</h1>
-<p class="s">Прототип показывает два способа использования сервиса: сотрудник работает через web-интерфейс, а внутреннее приложение — через reverse proxy и forward-auth.</p>
-<div class="tabs"><span class="on">Сотрудник</span><span>Внутреннее приложение</span><span>Администратор</span></div>
+<h1>Interaction Scenarios</h1>
+<p class="s">The prototype demonstrates two ways to use the service: an employee works through the web interface, while the internal application uses a reverse proxy and forward authentication.</p>
+<div class="tabs"><span class="on">Employee</span><span>Internal Application</span><span>Administrator</span></div>
 <div class="tw"><table>
-<tr><th>Участник</th><th>Действие</th><th>Результат</th></tr>
-<tr><td>Сотрудник</td><td>Открывает сервис по HTTPS и вводит логин/пароль</td><td>Сервис запрашивает TOTP-код</td></tr>
-<tr><td>Сотрудник</td><td>Вводит TOTP или одноразовый резервный код</td><td>Создаётся аутентифицированная сессия</td></tr>
-<tr><td>Внутреннее приложение</td><td>Reverse proxy отправляет запрос на forward-auth</td><td>200 и identity headers — доступ разрешён; 401 — требуется вход</td></tr>
-<tr><td>Администратор</td><td>Управляет пользователями и просматривает аудит</td><td>Операция выполняется по RBAC и записывается в журнал</td></tr>
+<tr><th>User</th><th>Action</th><th>Result</th></tr>
+<tr><td>Employee</td><td>Opens the service via HTTPS and enters a username and password</td><td>The service is requesting a TOTP code</td></tr>
+<tr><td>Employee</td><td>Enters the TOTP or one-time backup code</td><td>An authenticated session is created</td></tr>
+<tr><td>Internal Application</td><td>The reverse proxy sends a request for forward authentication</td><td>
+200 and identity headers — access granted; 401 — login required
+</td></tr>
+<tr><td>Administrator</td><td>Manages users and reviews audit logs</td><td>The operation is performed using RBAC and is logged</td></tr>
 </table></div>
-<div class="msg ok">Внешние облачные сервисы, SMS, push и интернет в сценариях не используются.</div>
-<p class="note">Связанные требования: API-001, API-002, API-003, API-004, NFR-001, SEC-006.</p>
+<div class="msg ok">External cloud services, SMS, push notifications, and the Internet are not used in the scenarios.</div>
+<p class="note">Related requirements: API-001, API-002, API-003, API-004, NFR-001, SEC-006.</p>
 </div>
 </section>
 
 
-<dialog id="dlg"><h2>Сбросить 2FA?</h2><p>Пользователь-цель: <b id="tgt"></b>. После сброса ему потребуется заново подключить аутентификатор.</p>
-<div class="row"><button class="btn danger" id="yes">Сбросить 2FA</button><button class="btn ghost" id="no">Отмена</button></div></dialog>
+<dialog id="dlg"><h2>Reset 2FA?</h2><p>Target User: <b id="tgt"></b>. After the reset, he will need to reconnect the authenticator.</p>
+<div class="row"><button class="btn danger" id="yes">Reset 2FA</button><button class="btn ghost" id="no">Cancel</button></div></dialog>
 </main>
 <script>
 (function(){
@@ -169,21 +171,21 @@ var nav=document.querySelector('.proto');
 function show(id){
   screens.forEach(function(s){s.classList.toggle('on',s.id===id)});
   [].forEach.call(nav.children,function(b){b.setAttribute('aria-current',b.dataset.id===id?'true':'false')});
-  
+
   window.scrollTo(0,0);
 }
 screens.forEach(function(s){var b=document.createElement('button');b.textContent=s.dataset.title;b.dataset.id=s.id;b.onclick=function(){show(s.id)};nav.appendChild(b)});
 var d=$('digits');
-for(var i=0;i<6;i++){var x=document.createElement('input');x.type='text';x.inputMode='numeric';x.maxLength=1;x.setAttribute('aria-label','Цифра '+(i+1));
+for(var i=0;i<6;i++){var x=document.createElement('input');x.type='text';x.inputMode='numeric';x.maxLength=1;x.setAttribute('aria-label','Number '+(i+1));
   x.addEventListener('input',function(e){e.target.value=e.target.value.replace(/\D/g,'');if(e.target.value&&e.target.nextElementSibling)e.target.nextElementSibling.focus()});d.appendChild(x)}
-function busy(btn,fn){btn.disabled=true;var t=btn.textContent;btn.textContent='Проверка…';setTimeout(function(){btn.disabled=false;btn.textContent=t;fn()},600)}
+function busy(btn,fn){btn.disabled=true;var t=btn.textContent;btn.textContent='Checking…';setTimeout(function(){btn.disabled=false;btn.textContent=t;fn()},600)}
 $('showpw').onclick=function(){var p=$('pw');p.type=p.type==='password'?'text':'password'};
 $('go1').onclick=function(){var b=this;busy(b,function(){if(!$('pw').value){$('e1').hidden=false}else{$('e1').hidden=true;show('s3')}})};
 $('cp').onclick=function(){$('cpm').hidden=false};
 $('go2').onclick=function(){show('s3')};
-var tmv=21;setInterval(function(){tmv=tmv>0?tmv-1:30;$('tm').textContent='Осталось времени: 00:'+(tmv<10?'0':'')+tmv},1000);
+var tmv=21;setInterval(function(){tmv=tmv>0?tmv-1:30;$('tm').textContent='Remaining time : 00:'+(tmv<10?'0':'')+tmv},1000);
 $('go3').onclick=function(){var b=this;busy(b,function(){var v=[].map.call(d.children,function(c){return c.value}).join('');if(v.length<6){$('e3').hidden=false}else{$('e3').hidden=true;show('s4')}})};
-$('bk').onclick=function(){$('e3').textContent='Резервный код принят. Осталось кодов: 7';$('e3').className='msg ok';$('e3').hidden=false};
+$('bk').onclick=function(){$('e3').textContent='The backup code has been accepted. Codes remaining: 7';$('e3').className='msg ok';$('e3').hidden=false};
 $('dl').onclick=function(){$('m4').hidden=false};
 $('go4').onclick=function(){show('s5')};
 $('logout').onclick=function(e){e.preventDefault();show('s1')};
@@ -191,8 +193,8 @@ $('back6').onclick=function(e){e.preventDefault();show('s5')};
 document.querySelector('.go-audit').onclick=function(){show('s6')};
 [].forEach.call(document.querySelectorAll('[data-reset]'),function(b){b.onclick=function(){$('tgt').textContent=b.dataset.reset;$('dlg').showModal()}});
 $('no').onclick=function(){$('dlg').close()};
-$('yes').onclick=function(){$('dlg').close();$('last').textContent='Последнее событие: сброс 2FA для a.yerbolatov выполнен только что';
-  var r=$('aud').insertRow(1);r.innerHTML='<td>сейчас</td><td>TOTP_RESET</td><td>admin</td><td><span class="tag ok">Успешно</span></td>'};
+$('yes').onclick=function(){$('dlg').close();$('last').textContent='Latest event: 2FA reset for a.yerbolatov was just completed';
+  var r=$('aud').insertRow(1);r.innerHTML='<td>now</td><td>TOTP_RESET</td><td>admin</td><td><span class="tag ok">Successful</span></td>'};
 show('s1');
 })();
 </script>

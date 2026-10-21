@@ -1,40 +1,39 @@
-# ADR-03: REST API и forward-auth как основные интеграции
+# ADR-03: REST API and Forward-Auth as Primary Integrations
 
-- **Статус:** Принято
-- **Дата:** 2026-10-17
+- **Status:** Accepted
+- **Date:** 2026-10-17
 
-## Контекст
+## Context
 
-Внутренние приложения должны подключаться к MFA-сервису без внешнего облака. Требуется REST API и endpoint forward-auth для reverse proxy; OIDC рассматривается как дополнительная возможность. Нужно покрыть два сценария: программное управление/проверка и защита уже существующих web-приложений через Nginx или аналогичный proxy.
+Internal applications must connect to the MFA service without an external cloud. A REST API and a forward-auth endpoint for a reverse proxy are required; OIDC is considered an optional capability. Two scenarios must be covered: programmatic management/verification and protection of existing web applications through Nginx or a similar proxy.
 
-## Решение
+## Decision
 
-Реализовать в MVP:
+Implement in the MVP:
 
-1. **REST API** для управления пользователями, enrollment TOTP, проверки аутентификации, резервных кодов и административных операций;
-2. **forward-auth endpoint** для reverse proxy, который возвращает только результат проверки и безопасные identity headers после успешной аутентификации.
+1. **REST API** for user management, TOTP enrollment, authentication checks, recovery codes, and administrative operations;
+2. a **forward-auth endpoint** for the reverse proxy that returns only the verification result and safe identity headers after successful authentication.
 
-Проектировать API с TLS, rate limiting, RBAC, единообразными ошибками, защитой от повторного использования TOTP и строгим доверием к forwarded headers. OIDC не включать в обязательную первую версию, но не блокировать добавление локального OIDC provider.
+Design the API with TLS, rate limiting, RBAC, consistent errors, TOTP replay protection, and strict trust rules for forwarded headers. Do not make OIDC mandatory in the first version, but do not block adding a local OIDC provider.
 
-## Последствия
+## Consequences
 
-Положительные:
+Benefits:
 
-- REST подходит для внутренних приложений и административной автоматизации;
-- forward-auth не требует встраивать MFA-код в каждое web-приложение;
-- оба интерфейса могут работать полностью в LAN;
-- поверхность MVP меньше, чем у полноценного federation/SSO provider.
+- REST fits internal applications and administrative automation;
+- forward-auth avoids embedding MFA code in every web application;
+- both interfaces can operate entirely inside the LAN;
+- the MVP surface is smaller than that of a full federation/SSO provider.
 
-Ограничения:
+Limitations:
 
-- REST-клиенты сами должны корректно управлять сессиями и ошибками;
-- forward-auth безопасен только при правильной очистке и проверке proxy headers;
-- без OIDC нет единого стандартного token/claims flow для всех клиентов;
-- OIDC потребуется, если проект перейдёт к федерации и большому числу независимых приложений.
+- REST clients must manage sessions and errors correctly;
+- forward-auth is secure only when proxy headers are properly cleared and validated;
+- without OIDC there is no single standard token/claims flow for all clients;
+- OIDC will be needed if the project moves to federation and many independent applications.
 
-## Альтернативы
+## Alternatives
 
-- **OIDC:** стандартен для SSO и identity claims, но требует issuer, discovery, key rotation, client registration, redirect URI и более сложной модели доверия.
-- **Только REST:** проще, но не покрывает reverse-proxy сценарий без специального клиента в каждом приложении.
-- **Только forward-auth:** удобно для web-приложений, но недостаточно для enrollment, администрирования и интеграции не-HTTP клиентов.
-
+- **OIDC:** standard for SSO and identity claims, but it requires an issuer, discovery, key rotation, client registration, redirect URIs, and a more complex trust model.
+- **REST only:** simpler, but it does not cover the reverse-proxy scenario without a special client in every application.
+- **Forward-auth only:** convenient for web applications, but insufficient for enrollment, administration, and non-HTTP client integration.

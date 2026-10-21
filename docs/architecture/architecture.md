@@ -1,46 +1,46 @@
-# Архитектура системы
+# System Architecture
 
-## Назначение
+## Purpose
 
-Архитектура описывает MVP локального сервиса двухфакторной аутентификации для изолированной корпоративной сети. Сервис работает внутри LAN без внешнего интернета и использует внутренние NTP и CA. Основной второй фактор — TOTP; интеграция выполняется через REST API и forward-auth.
+This architecture describes an MVP local two-factor authentication service for an isolated corporate network. The service runs inside the LAN without external Internet access and uses internal NTP and CA services. The primary second factor is TOTP; integration is provided through a REST API and forward-auth.
 
-Редактируемый исходник всех трёх диаграмм находится в [offline-2fa-architecture.drawio](../../diagrams/src/offline-2fa-architecture.drawio). Файл содержит три страницы и открывается в diagrams.net/draw.io.
+The editable source for all three diagrams is in [offline-2fa-architecture.drawio](../../diagrams/src/offline-2fa-architecture.drawio). The file contains three pages and opens in diagrams.net/draw.io.
 
-## Диаграмма контекста
+## Context Diagram
 
-На контекстной диаграмме показаны сотрудник, администратор, внутренние приложения/reverse proxy, сервис, внутренний NTP и внутренний CA. Красная граница и пунктирная связь явно показывают отсутствие выхода в интернет.
+The context diagram shows the employee, administrator, internal applications/reverse proxy, the service, internal NTP, and the internal CA. The red boundary and dashed connection explicitly show that there is no Internet egress.
 
-![Контекст системы](../../diagrams/export/system-context.svg)
+![System context](../../diagrams/export/system-context.svg)
 
-## Диаграмма вариантов использования
+## Use-Case Diagram
 
-Диаграмма показывает актёров и основные сценарии MVP. Идентификаторы в скобках ссылаются на требования из [requirements.md](../requirements/requirements.md): вход — FR-001–FR-005, подключение 2FA — FR-003, recovery — FR-006, forward-auth — API-003, сброс устройства — FR-009, аудит — SEC-006, управление пользователями и ролями — FR-008–FR-010.
+The diagram shows the actors and the main MVP scenarios. Identifiers in parentheses refer to the requirements in [requirements.md](../requirements/requirements.md): sign-in — FR-001–FR-005, 2FA enrollment — FR-003, recovery — FR-006, forward-auth — API-003, device reset — FR-009, audit — SEC-006, and user and role management — FR-008–FR-010.
 
-![Варианты использования](../../diagrams/export/use-cases.svg)
+![Use cases](../../diagrams/export/use-cases.svg)
 
-## Черновик диаграммы компонентов
+## Component Diagram Draft
 
-Сервис разделён на API/Web/forward-auth слой, authentication service, TOTP модуль, криптографический модуль, audit service и SQLite. TOTP-секреты хранятся только как AES-256-GCM ciphertext, recovery codes — как хеши, а ключ шифрования находится во внешнем key store и не попадает в БД или Git. Время берётся из внутреннего NTP, TLS доверяет внутреннему CA.
+The service is divided into an API/Web/forward-auth layer, authentication service, TOTP module, cryptography module, audit service, and SQLite. TOTP secrets are stored only as AES-256-GCM ciphertext, recovery codes as hashes, and the encryption key is kept in an external key store and never enters the database or Git. Time comes from internal NTP, and TLS trusts the internal CA.
 
-![Компоненты](../../diagrams/export/component-draft.svg)
+![Components](../../diagrams/export/component-draft.svg)
 
-## Трассировка требований, компонентов и сценариев
+## Requirements, Components, and Scenario Traceability
 
-| Требования | Компоненты | Сценарии |
+| Requirements | Components | Scenarios |
 |---|---|---|
-| FR-001, FR-002, FR-007 | API layer, Authentication service, Cryptography | Вход, смена пароля, отзыв сессии |
-| FR-003, FR-004, FR-005 | TOTP module, Cryptography, Internal NTP, SQLite | QR enrollment, проверка TOTP, защита replay |
-| FR-006 | TOTP module, Cryptography, SQLite | Использование recovery code |
-| FR-008, FR-009, FR-010 | Web interfaces, API layer, Authentication service, Audit service | Управление пользователями, RBAC, reset устройства |
-| API-001, API-002 | API layer, Authentication service | REST API и авторизация запросов |
-| API-003, API-004 | Forward-auth, Authentication service | Проверка запроса reverse proxy |
-| SEC-001, SEC-010 | API layer, Web interfaces, Internal CA | HTTPS и защита browser/API requests |
-| SEC-002, SEC-003, SEC-007 | Cryptography, SQLite, External key store | Защита секретов и логов |
-| SEC-004, SEC-006, SEC-008 | Authentication service, TOTP module, Audit service | Lockout, аудит, RBAC |
-| NFR-001–NFR-006 | Все runtime-компоненты, Internal NTP/CA | Офлайн-развёртывание и backup |
+| FR-001, FR-002, FR-007 | API layer, Authentication service, Cryptography | Sign-in, password change, session revocation |
+| FR-003, FR-004, FR-005 | TOTP module, Cryptography, Internal NTP, SQLite | QR enrollment, TOTP verification, replay protection |
+| FR-006 | TOTP module, Cryptography, SQLite | Recovery-code use |
+| FR-008, FR-009, FR-010 | Web interfaces, API layer, Authentication service, Audit service | User management, RBAC, device reset |
+| API-001, API-002 | API layer, Authentication service | REST API and request authorization |
+| API-003, API-004 | Forward-auth, Authentication service | Reverse-proxy request verification |
+| SEC-001, SEC-010 | API layer, Web interfaces, Internal CA | HTTPS and browser/API request protection |
+| SEC-002, SEC-003, SEC-007 | Cryptography, SQLite, External key store | Secret and log protection |
+| SEC-004, SEC-006, SEC-008 | Authentication service, TOTP module, Audit service | Lockout, audit, RBAC |
+| NFR-001–NFR-006 | All runtime components, Internal NTP/CA | Offline deployment and backup |
 
-## Архитектурные ограничения и границы
+## Architectural Constraints and Boundaries
 
-- Интернет, SMS, push, e-mail и облачные MFA-провайдеры не используются.
-- WebAuthn, OIDC, LDAP/AD, RADIUS и SIEM-export остаются расширениями.
-- SQLite выбран для single-node MVP; PostgreSQL может быть добавлен для multi-instance deployment.
+- Internet, SMS, push, e-mail, and cloud MFA providers are not used.
+- WebAuthn, OIDC, LDAP/AD, RADIUS, and SIEM export remain extensions.
+- SQLite is selected for the single-node MVP; PostgreSQL may be added for multi-instance deployment.

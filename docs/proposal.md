@@ -1,83 +1,83 @@
-# Описание проекта (Project Proposal)
+﻿# Project Proposal
 
-## 1. Название проекта
+## 1. Project title
 
-Разработка веб-сервиса с локальной двухфакторной аутентификацией для изолированных корпоративных сетей
+Development of a web service with local two-factor authentication for isolated corporate networks
 
-**Репозиторий:** [offline-2fa-service](https://github.com/Yerbolatov/offline-2fa-service)
+**Repository:** [offline-2fa-service](https://github.com/Yerbolatov/offline-2fa-service)
 
-## 2. Команда и руководитель
+## 2. Team and leader
 
-| Роль | ФИО | Подразделение / группа |
+| Role | Name | Division / Group |
 |---|---|---|
-| Студент, автор и разработчик | Ерболатов Али | SE-2401 |
-| Руководитель | Мырзахметов Алмас | School of Software Engineering |
+| Student, author and developer | Yerbolatov Ali | SE-2401 |
+| Head | Myrzakhmetov Almas | School of Software Engineering |
 
-## 3. Постановка проблемы
+## 3. Problem statement
 
-Большинство решений двухфакторной аутентификации (SMS-коды, push-уведомления, облачные сервисы Google, Microsoft, Duo) требуют подключения к интернету. Изолированные корпоративные сети, например сети государственных органов, банков, промышленных объектов, оборонных и исследовательских организаций, намеренно отделены от интернета, поэтому такие инструменты в них применять нельзя. В результате организации часто используют только пароль, а он уязвим к фишингу, повторному использованию паролей и краже учётных данных инсайдерами.
+Most two-factor authentication solutions (SMS codes, push notifications, cloud services from Google, Microsoft, and Duo) require an internet connection. Isolated corporate networks—such as those of government agencies, banks, industrial facilities, and defense and research organizations—are intentionally disconnected from the internet, so such tools cannot be used on them. As a result, organizations often rely solely on passwords, which are vulnerable to phishing, password reuse, and credential theft by insiders.
 
-Проблема заключается в отсутствии простого самостоятельно разворачиваемого второго фактора аутентификации, который работает полностью внутри закрытой сети, не зависит от внешних сервисов, поддерживает аудит и легко интегрируется с внутренними приложениями.
+The problem is the lack of a simple self-deployable second authentication factor that works entirely within a closed network, is independent of external services, supports auditing, and integrates seamlessly with internal applications.
 
-### Уточнение терминов
+### Clarification of terms
 
-- **Изолированная сеть** — сеть без доступа в интернет, но с внутренней локальной инфраструктурой: внутренняя сеть (LAN), внутренний NTP-сервер для синхронизации времени и внутренний удостоверяющий центр (CA) для TLS-сертификатов.
+- **Isolated network** — a network without Internet access, but with an internal local infrastructure: an internal network (LAN), an internal NTP server for time synchronization and an internal certificate authority (CA) for TLS certificates.
 
-## 4. Целевые пользователи
+### Targeted users
 
-- **Системные администраторы и специалисты по информационной безопасности** изолированных сетей: развёртывают сервис и управляют им.
-- **Сотрудники таких организаций**: входят в системы с использованием второго фактора.
-- **Разработчики внутренних приложений**: интегрируют сервис через API или стандартный протокол.
+- **System administrators and information security specialists** of isolated networks: deploy and manage the service.
+- **Employees of such organizations**: use the second factor to access systems.
+- **Internal application developers**: integrate the service via API or standard protocol.
 
-## 5. Цель
+## 4. Subject
 
-Спроектировать и реализовать самостоятельно разворачиваемый веб-сервис, обеспечивающий двухфакторную аутентификацию полностью внутри изолированной корпоративной сети, без доступа в интернет и без сторонних облачных сервисов.
+Design and implement a self-developed web service that provides two-factor authentication completely within an isolated corporate network, without Internet access and without third-party cloud services.
 
-## 6. Задачи
+## 5. Tasks
 
-1. Проанализировать существующие методы двухфакторной аутентификации (TOTP, HOTP, FIDO2/WebAuthn, аппаратные токены) и решения (Keycloak, privacyIDEA, FreeIPA, Duo), оценить их пригодность для автономных сред.
-2. Построить модель угроз для изолированной сети (STRIDE) и определить требования безопасности, используя OWASP ASVS как ориентир.
-3. Спроектировать архитектуру: серверную часть, базу данных, API, интерфейсы пользователя и администратора.
-4. Реализовать аутентификацию первого фактора (логин и пароль, хеширование Argon2id) и второй фактор на основе TOTP (RFC 6238).
-5. Реализовать подключение 2FA (QR-код, передача секрета), резервные коды восстановления и сброс устройства администратором.
-6. Реализовать безопасное хранение TOTP-секретов (шифрование AES-256-GCM, ключ хранится отдельно от базы данных).
-7. Реализовать защиту от перебора (ограничение частоты запросов, блокировка) и от повторного использования кода (TOTP-код принимается только один раз), а также допуск на расхождение часов.
-8. Реализовать панель администратора с ролевой моделью доступа (RBAC) и неизменяемым журналом аудита.
-9. Обеспечить механизм интеграции для внутренних приложений: REST API и endpoint forward-auth для обратных прокси (например, Nginx). Поддержка OIDC рассматривается как дополнительная возможность.
-10. Подготовить систему к автономному развёртыванию (Docker-образы или офлайн-установщик, внутренний удостоверяющий центр TLS, отсутствие внешних CDN и шрифтов).
-11. Протестировать систему (модульные, интеграционные тесты и тесты безопасности) и оценить производительность.
-12. Подготовить документацию: руководство администратора, руководство пользователя и описание API.
+1. Analyze the existing methods of two-factor authentication (TOTP, HOTP, FIDO2/WebAuthn, hardware tokens) and solutions (Keycloak, privacyIDEA, FreeIPA, Duo), and assess their suitability for standalone environments.
+2. Build a threat model for the isolated network (STRIDE) and define security requirements using OWASP ASVS as a benchmark.
+3. Design the architecture: server part, database, API, user and administrator interfaces.
+4. Implement authentication of the first factor (login and password, Argon2id hashing) and the second factor based on TOTP (RFC 6238).
+5. Implement 2FA enrollment (QR code, secret transfer), backup recovery codes, and device reset by administrator.
+6. Implement secure storage of TOTP secrets (AES-256-GCM encryption, the key stored separately from the database).
+7. Implement protection against brute force (rate limiting, blocking) and against reuse of the code (a TOTP code is accepted only once), as well as tolerance for clock discrepancies.
+8. Implement an administrator panel with a role model (RBAC) and an append-only audit log.
+9. Provide an integration mechanism for internal applications: REST API and forward-auth for reverse proxies (for example, Nginx). OIDC support is considered as an additional option.
+10. Prepare the system for offline deployment (Docker images or an offline installer, internal TLS certification center, absence of external CDNs and fonts).
+11. Test the system (unit, integration, and security tests) and evaluate the performance.
+12. Prepare documentation: administrator manual, user manual, and API description.
 
-## 7. Ожидаемые результаты
+## 6. Expected results
 
-- Работающий сервис с исходным кодом, разворачиваемый одной командой в изолированной среде.
-- Модель угроз и документ с анализом безопасности.
-- Спецификация API (OpenAPI) и демонстрационная интеграция с примером внутреннего приложения.
-- Набор тестов и отчёт о тестировании, включая тесты безопасности.
-- Документация по развёртыванию и текст дипломной работы.
+- A running source code service deployed by a single team in an isolated environment.
+- Threat model and security analysis document.
+- API specification (OpenAPI) and demonstration integration with an example of an internal application.
+- A set of tests and a test report, including security tests.
+- Deployment documentation and the thesis text.
 
-## 8. Границы проекта (Scope)
+## 7. Project boundaries (scope)
 
-### Входит в проект (MVP)
+### Included in the project (MVP)
 
-- Логин и пароль плюс TOTP, резервные коды.
-- Интерфейсы пользователя и администратора, RBAC, журнал аудита.
-- Ограничение частоты запросов и шифрование секретов.
-- Интеграция через REST API и forward-auth.
-- Автономное развёртывание с внутренним CA и HTTPS.
-- Тесты и документация.
+- Login and password plus TOTP, backup codes.
+- User and administrator interfaces, RBAC, audit log.
+- Limiting request frequency and encrypting secrets.
+- Integration via REST API and forward-auth.
+- Offline deployment with internal CA and HTTPS.
+- Tests and documentation.
 
-### Дополнительные цели
+### Secondary objectives
 
-- Аппаратные ключи FIDO2/WebAuthn (работают офлайн, но требуют HTTPS и корректного origin).
-- Интеграция с LDAP / Active Directory.
-- RADIUS-сервер для VPN и сетевого оборудования.
-- Поддержка OIDC.
-- Экспорт журналов в syslog или SIEM.
+- FIDO2/WebAuthn hardware keys (work offline, but require HTTPS and correct origin).
+- Integration with Active Directory.
+- RADIUS server for VPN and network equipment.
+- OIDC support.
+- Export logs to syslog or SIEM.
 
-### Не входит в проект
+### Not part of the project
 
-- Облачные каналы, SMS, e-mail и push-уведомления.
-- Биометрия.
-- Мобильное приложение (пользователи применяют существующие приложения-аутентификаторы, такие как FreeOTP, Aegis или Google Authenticator, которые работают офлайн).
-- Сертификация по национальным стандартам и требованиям регуляторов.
+- Cloud channels, SMS, e-mail, and push notifications.
+- Biometric data.
+- Mobile app (users use existing authentication apps such as FreeOTP, Aegis, or Google Authenticator that work offline).
+- Certification according to national standards and regulatory requirements.
