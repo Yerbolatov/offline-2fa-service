@@ -1,76 +1,75 @@
-# План управления проектом и реестр рисков
+# Project Management Plan and Risk Register
 
-## 1. Назначение
+## 1. Purpose
 
-Документ описывает этапы разработки сервиса локальной двухфакторной аутентификации, распределение ответственности, зависимости и риски проекта.
-План связан с задачами проекта в [YouTrack](https://offline2fa.youtrack.cloud/issues/DIP) и с требованиями из [DIP-26](https://offline2fa.youtrack.cloud/issue/DIP-26).
+This document describes the development phases of the local two-factor authentication service, as well as the allocation of responsibilities, dependencies, and project risks.
+This plan is linked to the project tasks in [YouTrack](https://offline2fa.youtrack.cloud/issues/DIP) and to the requirements in [DIP-26](https://offline2fa.youtrack.cloud/issue/DIP-26).
 
-## 2. Ответственность
+## 2. Responsibilities
 
-| Участник | Ответственность | Результат |
-|---|---|---|
-| Студент — Ерболатов Али | Анализ предметной области, проектирование, разработка, тестирование, документация, ведение Git и YouTrack | Исходный код, документы, тесты, демонстрация и отчёт |
-| Руководитель — Мырзахметов Алмас | Проверка ключевых решений, обратная связь по документации и прототипу, контроль готовности к этапам | Комментарии и подтверждение существенных результатов |
+| Participant | Responsibility | Result |
+| ---|---|---|
+| Student — Ali Yerbolatov | Domain analysis, design, development, testing, documentation, Git and YouTrack management | Source code, documentation, tests, demo, and report |
+| Supervisor — Almas Myrzakhmetov | Review of key decisions, feedback on documentation and prototype, monitoring readiness for project phases | Comments and confirmation of significant results |
 
-Студент отвечает за выполнение задач и обновление статусов. Руководитель проверяет значимые результаты на контрольных точках, но не заменяет ежедневную разработку и ведение доски.
+The student is responsible for completing tasks and updating statuses. The supervisor reviews key results at checkpoints but does not replace the daily work on the board.
 
-## 3. Этапы и контрольные точки
+## 3. Phases and Checkpoints
 
-Календарные даты будут добавлены после согласования с руководителем и
-официального объявления сроков защиты. До этого этапы выполняются
-последовательно, а переход к следующему этапу происходит после выполнения
-критериев завершения предыдущего.
+The dates will be added after consultation with the supervisor and
+the official announcement of the defense dates. Until then, the stages are completed
+sequentially, and the transition to the next stage occurs after the
+completion criteria for the previous stage have been met.
 
-| Этап | Порядок | Содержание | Результат и критерий завершения |
-|---|---:|---|---|
-| Аналитическая и проектная подготовка | 1 | Завершить README, proposal, literature review, сравнения, требования, диаграммы, прототип и план верификации | Материалы доступны в репозитории, а задачи имеют ссылки на результаты |
-| Подготовка каркаса MVP | 2 | Создать структуру FastAPI, конфигурацию, health-check, SQLite-схему и offline-профиль запуска | Сервис запускается локально, конфигурация использует placeholders, первый smoke-test проходит |
-| Первый фактор и TOTP enrollment | 3 | Реализовать пользователей, Argon2id, сессии, QR/otpauth enrollment и проверку TOTP | Проходят тесты FR-001–FR-004 и базовый сценарий входа |
-| Recovery, replay и защита от перебора | 4 | Добавить recovery codes, одноразовость кода, lockout/rate limiting и безопасное хранение секретов | Проходят FR-005–FR-006, SEC-002–SEC-005 и негативные security-тесты |
-| Администрирование и интеграция | 5 | Реализовать RBAC, reset устройства, audit log, REST API и forward-auth | Проходят FR-008–FR-010, API-001–API-005 и сценарии администратора |
-| Офлайн-развёртывание | 6 | Подготовить Docker/offline bundle, внутренний CA, NTP, backup и инструкции | Запуск в закрытом стенде проходит без внешних запросов; выполняются NFR-001–NFR-006 |
-| Полная проверка и оценка | 7 | Выполнить unit, integration, E2E, security и нагрузочные тесты; сравнить с password-only baseline | Заполнен отчёт с p95, error rate, replay/lockout/drift результатами и известными ограничениями |
-| Подготовка итоговой версии | 8 | Исправить критические дефекты, обновить документацию и подготовить демонстрацию | Все обязательные требования имеют PASS или обоснованное исключение; готова release-кандидатная версия |
-| Итоговая защита | 9 | Представить решение и защитить результаты | Представлены репозиторий, история изменений, тестовый отчёт и рабочий сценарий |
+| Phase | Procedure | Content | Result and Completion Criteria |
+|---| ---:|---|---|
+| Analytical and Design Preparation | 1 | Complete the README, proposal, literature review, comparisons, requirements, diagrams, prototype, and verification plan | Materials are available in the repository, and tasks include links to the results |
+| Preparing the MVP Framework | 2 | Create the FastAPI structure, configuration, health check, SQLite schema, and offline launch profile | The service launches locally, the configuration uses placeholders, and the first smoke test passes |
+| First factor and TOTP enrollment | 3 | Implement users, Argon2id, sessions, QR/otpauth enrollment, and TOTP verification | Tests FR-001–FR-004 and the basic login scenario pass |
+| Recovery, replay, and protection against brute-force attacks | 4 | Add recovery codes, one-time code usage, lockout/rate limiting, and secure storage of secrets | Pass FR-005–FR-006, SEC-002–SEC-005, and negative security tests |
+| Administration and Integration | 5 | Implement RBAC, device reset, audit log, REST API, and forward authentication | Passes FR-008–FR-010, API-001–API-005, and administrator scenarios |
+| Offline Deployment | 6 | Prepare Docker/offline bundle, internal CA, NTP, backup, and instructions | Deployment in a closed test environment occurs without external requests; NFR-001–NFR-006 are performed |
+| Comprehensive Testing and Evaluation | 7 | Perform unit, integration, E2E, security, and load tests; compare with the password-only baseline | A report is completed with p95, error rate, replay/lockout/drift results, and known limitations |
+| Preparing the Final Version | 8 | Fix critical defects, update documentation, and prepare a demonstration | All mandatory requirements have a “PASS” status or a justified exception; the release candidate version is ready |
+| Final Presentation | 9 | Present the solution and defend the results | The repository, change log, test report, and use case have been presented |
 
-## 5. Реестр рисков
+## 5. Risk Register
 
-Шкала: вероятность и влияние оцениваются как низкие, средние или высокие.
-Приоритет риска определяется сочетанием этих оценок.
+Scale: Probability and impact are rated as low, medium, or high.
+Risk priority is determined by a combination of these ratings.
 
-| ID | Риск | Вероятность | Влияние | Меры снижения | План реагирования |
+| ID | Risk | Probability | Impact | Mitigation Measures | Response Plan |
 |---|---|---|---|---|---|
-| R-01 | Офлайн-развёртывание требует пакетов, образов или сертификатов, которых нет в закрытой сети | Высокая | Высокое | Зафиксировать версии, подготовить offline bundle, checksum и тестовый стенд без egress заранее | Упростить профиль до одной инстанции и SQLite; перенести необязательные интеграции |
-| R-02 | Ошибка времени или недоступный внутренний NTP ломает TOTP | Средняя | Высокое | Добавить диагностику NTP, документировать окно дрейфа, использовать управляемые часы в тестах | Заблокировать readiness с понятной ошибкой и зафиксировать ограничение стенда |
-| R-03 | Неправильное хранение TOTP-секретов или ключа шифрования | Средняя | Критическое | AES-256-GCM, внешний key source, secret scanning, негативные тесты и review криптографии | Остановить релиз, удалить тестовые секреты, исправить схему и повторить security-тесты |
-| R-04 | Replay TOTP или recovery code из-за race condition | Средняя | Высокое | Уникальный time-step, атомарная транзакция, параллельный интеграционный тест | Приостановить демонстрацию login и исправить транзакционную границу |
-| R-05 | Объём MVP становится слишком большим из-за OIDC, WebAuthn, LDAP и RADIUS | Высокая | Высокое | Не включать расширения в MVP, вести scope через MUST/SHOULD/COULD и ADR | Перенести расширение в backlog, сохранить REST + forward-auth и TOTP |
-| R-06 | Нагрузка Argon2id или rate limiting ухудшает задержку входа | Средняя | Среднее | Измерять p95 на целевой машине, отдельно настраивать cost и лимиты, не ослаблять безопасность без обоснования | Зафиксировать компромисс, оптимизировать инфраструктуру и повторить PERF-тест |
-| R-07 | Недостаточная защита административных операций и аудита | Средняя | Высокое | RBAC, append-only модель, actor/target/request id, security-тесты на 403 и tampering | Запретить admin release до исправления и проверки журнала |
-| R-08 | Зависимость от выбранных библиотек FastAPI, TOTP, криптографии или SQLite | Средняя | Среднее | Зафиксировать версии, использовать поддерживаемые библиотеки и изолировать их адаптерами | Заменить библиотеку только через ADR и повторить regression/security-тесты |
-| R-09 | Недостаток времени на тестирование и исправление дефектов | Высокая | Высокое | Заморозить MVP, реализовывать сначала MUST, выделить отдельное окно на security и E2E | Сократить SHOULD/COULD, оставить обязательные сценарии и явно оформить ограничения |
-| R-10 | Потеря данных или аудита при сбое SQLite/неверном backup | Средняя | Высокое | Проверить backup/restore, graceful shutdown и восстановление после restart | Восстановить тестовый snapshot и документировать RPO/RTO для MVP |
-| R-11 | Изменение требований руководителем или комиссии на позднем этапе | Средняя | Среднее | Использовать контрольные точки и письменную фиксацию решений в ADR/YouTrack | Оценить влияние, обновить backlog и не менять MVP без анализа сроков |
-| R-12 | Ошибки конфигурации внутреннего CA или TLS | Средняя | Высокое | Тестовый CA, проверка hostname/chain, инструкция по установке доверия | Перевести стенд на заранее проверенный сертификат и зафиксировать процедуру |
+| R-01 | Offline deployment requires packages, images, or certificates that are not available on the private network | High | High | Lock down versions; prepare an offline bundle, checksum, and test environment without egress in advance | Simplify the profile to a single instance and SQLite; migrate optional integrations |
+| R-02 | Time error or an unavailable internal NTP server causes TOTP to fail | Medium | High | Add NTP diagnostics, document the drift window, use a master clock in tests | Block “readiness” with a clear error message and implement a test bench restriction |
+| R-03 | Improper storage of TOTP secrets or encryption keys | Medium | Critical | AES-256-GCM, external key source, secret scanning, negative tests, and cryptography review | Halt the release, remove test secrets, fix the design, and repeat security tests |
+| R-04 | Replay of TOTP or recovery code due to a race condition | Medium | High | Unique time step, atomic transaction, parallel integration test | Pause the login demonstration and fix the transaction boundary |
+| R-05 | The MVP scope is becoming too broad due to OIDC, WebAuthn, LDAP, and RADIUS | High | High | Do not include extensions in the MVP; define the scope using MUST/SHOULD/COULD and ADR | Move the extension to the backlog; retain REST + forward-auth and TOTP |
+| R-06 | Argon2id load or rate limiting increases input latency | Medium | Medium | Measure p95 on the target machine; configure cost and limits separately; do not compromise security without justification | Identify the trade-off, optimize the infrastructure, and repeat the PERF test |
+| R-07 | Insufficient protection of administrative operations and audits | Medium | High | RBAC, append-only model, actor/target/request ID, security tests for 403 and tampering | Prohibit admin release until the issue is fixed and the log is verified |
+| R-08 | Dependency on selected FastAPI, TOTP, cryptography, or SQLite libraries | Medium | Medium | Pin versions, use supported libraries, and isolate them with adapters | Replace the library only via ADR and rerun regression and security tests |
+| R-09 | Insufficient time for testing and fixing defects | High | High | Freeze the MVP, implement MUST requirements first, and set aside a separate time slot for security and E2E testing | Reduce SHOULD/COULD requirements, retain mandatory scenarios, and clearly define limitations |
+| R-10 | Data or audit loss due to SQLite failure or incorrect backup | Medium | High | Verify backup/restore, graceful shutdown, and recovery after a restart | Restore a test snapshot and document RPO/RTO for the MVP |
+| R-11 | Changes to requirements made by a manager or committee at a late stage | Medium | Medium | Use checkpoints and document decisions in ADR/YouTrack | Assess the impact, update the backlog, and do not change the MVP without analyzing the timeline |
+| R-12 | Internal CA or TLS configuration errors | Medium | High | Test CA, hostname/chain verification, trust setup instructions | Switch the test environment to a pre-validated certificate and document the procedure |
 
-## 6. Зависимости
+## 6. Dependencies
 
-| Зависимость | Для чего нужна | Риск при недоступности | Как управляется |
-|---|---|---|---|
-| Внутренний CA | HTTPS и доверенное соединение в закрытой сети | Невозможно корректно проверить TLS и browser/API сценарии | Тестовый CA и сертификаты хранятся вне Git; процедура выпуска описывается в deployment guide |
-| Внутренний NTP | Корректная генерация и проверка TOTP | Ложные отказы или принятие кода вне ожидаемого окна | Диагностика времени, настроенное окно дрейфа и тестовые часы |
-| FastAPI и Python runtime | Backend и REST API | Изменения API или несовместимость зависимостей | Фиксированные версии и offline package bundle |
-| SQLite | Single-node хранилище MVP | Потеря транзакций или ограничение конкурентности | WAL/транзакции, backup/restore, отдельный PostgreSQL как будущее расширение |
-| Библиотека TOTP | Совместимость с RFC 6238 и otpauth | Ошибки кодов или QR enrollment | RFC 6238 test vectors и интеграционные тесты |
-| Криптографическая библиотека | AES-256-GCM и Argon2id | Небезопасное или несовместимое хранение секретов | Использовать поддерживаемую библиотеку, не реализовывать криптографию самостоятельно |
-| Reverse proxy | Forward-auth интеграция с внутренними приложениями | Невозможно подтвердить сценарий доступа приложения | Тестовый Nginx-конфиг и контрактные тесты API-003/API-004 |
-| Offline registry/package storage | Установка без интернета | Невоспроизводимое развёртывание | Заранее собрать bundle и проверить checksum на чистой машине |
-| YouTrack и GitHub | Трассируемость задач, ревью и истории | Нельзя подтвердить прогресс и связь результата с задачей | В каждом PR/коммите указывать ID задачи и ссылку на результат |
+| Dependency | Purpose | Risk if unavailable | How it is managed |
+| ---|---|---|---|
+| Internal CA | HTTPS and trusted connections on a private network | Inability to properly validate TLS and browser/API scenarios | Test CA and certificates are stored outside of Git; the issuance procedure is described in the deployment guide |
+| Internal NTP | Correct TOTP generation and verification | False failures or code acceptance outside the expected window | Time diagnostics, configured drift window, and test clocks |
+| FastAPI and Python runtime | Backend and REST API | API changes or dependency incompatibilities | Fixed versions and offline package bundles |
+| SQLite | Single-node MVP storage | Transaction loss or concurrency limitations | WAL/transactions, backup/restore, separate PostgreSQL as a future extension |
+| TOTP library | Compatibility with RFC 6238 and otpauth | Code errors or QR code enrollment | RFC 6238 test vectors and integration tests |
+| Cryptography Library | AES-256-GCM and Argon2id | Insecure or incompatible secret storage | Use a supported library; do not implement cryptography yourself |
+| Reverse proxy | Forward-auth integration with internal applications | Unable to verify the application’s access scenario | Test Nginx configuration and API-003/API-004 contract tests |
+| Offline registry/package storage | Installation without an internet connection | Non-reproducible deployment | Pre-build the bundle and verify the checksum on a clean machine |
+| YouTrack and GitHub | Traceability of issues, reviews, and history | Cannot confirm progress or link the result to the issue | Include the issue ID and a link to the result in every PR/commit |
 
-## 7. Следующие шаги после первой контрольной точки
+## 7. Next Steps After the First Milestone
 
-1. Создать отдельные задачи на каркас backend, схему БД, TOTP enrollment, recovery/replay, RBAC/audit, forward-auth, offline deployment и тесты.
-2. Подготовить минимальный offline bundle и проверить запуск на чистой машине без внешнего сетевого доступа.
-3. Реализовать сначала требования `MUST`, затем переходить к `SHOULD`.
-4. Вести журнал измерений и дефектов, чтобы к этапу оценки были доступны исходные данные, конфигурация и commit.
-
+1. Create separate tasks for the backend framework, database schema, TOTP enrollment, recovery/replay, RBAC/audit, forward authentication, offline deployment, and testing.
+2. Prepare a minimal offline bundle and verify that it runs on a clean machine without external network access.
+3. Implement the `MUST` requirements first, then move on to the `SHOULD` requirements.
+4. Maintain a log of metrics and defects so that the source code, configuration, and commits are available by the evaluation phase.

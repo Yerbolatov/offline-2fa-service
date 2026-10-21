@@ -1,153 +1,153 @@
-# План верификации и оценки
+# Verification and Evaluation Plan
 
-## 1. Назначение
+## 1. Purpose
 
-План определяет, как будет проверено достижение цели проекта: сервис должен обеспечивать локальную двухфакторную аутентификацию внутри изолированной корпоративной сети без зависимости от интернета и облачных провайдеров.
+This plan defines how the achievement of the project’s objective will be verified: the service must provide local two-factor authentication within an isolated corporate network without relying on the Internet or cloud providers.
 
-Проверка проводится по требованиям из [спецификации требований](../requirements/requirements.md), подготовленной для задачи [DIP-26](https://offline2fa.youtrack.cloud/issue/DIP-26).
-Обязательными для приёмки MVP считаются требования с приоритетом `MUST`.
-Требования `SHOULD` и `COULD` проверяются, если соответствующая функция реализована к моменту демонстрации.
+The test is conducted in accordance with the requirements specified in the [requirements specification](../requirements/requirements.md) prepared for task [DIP-26](https://offline2fa.youtrack.cloud/issue/DIP-26).
+Requirements with a priority of `MUST` are considered mandatory for MVP acceptance.
+Requirements with a priority of `SHOULD` and `COULD` are verified if the corresponding feature has been implemented by the time of the demonstration.
 
-## 2. Виды тестирования
+## 2. Types of Testing
 
-| Вид проверки | Цель | Что проверяется | Результат |
+| Type of Test | Purpose | What Is Tested | Result |
 |---|---|---|---|
-| Модульные тесты | Проверить отдельные функции без внешних зависимостей | генерация и проверка TOTP, Argon2id, AES-256-GCM, хеширование recovery codes, rate limiting, RBAC, обработка времени | автоматический отчёт с результатами и покрытием критических модулей |
-| Интеграционные тесты | Проверить взаимодействие компонентов | API, SQLite, сессии, аудит, внешний ключ шифрования, транзакции, forward-auth | набор API-тестов с кодами ответа и проверкой состояния БД |
-| E2E-тесты | Проверить пользовательские и административные сценарии целиком | enrollment, вход по двум факторам, recovery, reset устройства, logout, административные операции | воспроизводимый сценарий от HTTP/UI-запроса до результата |
-| Security-тесты | Проверить меры против угроз STRIDE | brute force, replay, обход RBAC, spoofed headers, утечки секретов, TLS, валидация и CSRF | отчёт с пройденными негативными сценариями и найденными дефектами |
-| Нагрузочные тесты | Проверить задержку, устойчивость и ёмкость | login, TOTP, forward-auth, rate limiting, старт сервиса и потребление памяти | измерения p50/p95/p99, RPS, error rate и ресурсов |
+| Modular Tests | Test individual functions without external dependencies | TOTP and Argon2id generation and verification, AES-256-GCM, recovery code hashing, rate limiting, RBAC, time handling | Automatic report with results and coverage of critical modules |
+| Integration Tests | Verify Component Interaction | API, SQLite, sessions, auditing, encryption key, transactions, forward authentication | a set of API tests with response codes and database status checks |
+| E2E Tests | Test user and administrative scenarios in their entirety | enrollment, two-factor authentication, recovery, device reset, logout, administrative operations | a reproducible scenario from the HTTP/UI request to the result |
+| Security Tests | Test STRIDE threat mitigation measures | brute force, replay, RBAC bypass, spoofed headers, secret leaks, TLS, validation, and CSRF | report detailing the negative test scenarios run and defects found |
+| Load Testing | Test latency, stability, and capacity | login, TOTP, forward authentication, rate limiting, service startup, and memory consumption | p50/p95/p99 metrics, RPS, error rate, and resource usage |
 
-Каждый тест должен использовать только синтетические учётные записи, тестовые ключи и демонстрационные данные. Реальные пароли, персональные данные, production-сертификаты и ключи в тестовый набор не включаются.
+Each test must use only synthetic accounts, test keys, and sample data. Real passwords, personal data, production certificates, and keys must not be included in the test suite.
 
-## 3. Тестовая среда и условия измерений
+## 3. Test Environment and Measurement Conditions
 
-### 3.1. Базовый стенд
+### 3.1. Base Test Bench
 
-Основной стенд для приёмки MVP:
+The main test bench for MVP acceptance:
 
-- одна тестовая виртуальная машина или физический компьютер;
-- не менее 2 vCPU, 2 GB RAM и локальный SSD;
-- одна инстанция сервиса и SQLite;
-- внутренний тестовый CA для HTTPS;
-- внутренний NTP либо управляемые тестовые часы;
-- отсутствие внешнего DNS и заблокированный исходящий трафик;
-- фиксированные версии runtime и зависимостей из offline bundle.
+- one test virtual machine or physical computer;
+- at least 2 vCPUs, 2 GB of RAM, and a local SSD;
+- one service instance and SQLite;
+- an internal test CA for HTTPS;
+- an internal NTP server or a managed test clock;
+- no external DNS and blocked outbound traffic;
+- Fixed versions of the runtime and dependencies from the offline bundle.
 
-Характеристики машины, версии ОС, Python, базы данных, конфигурация rate limiting, размер набора данных и профиль нагрузки фиксируются вместе с результатами каждого прогона.
+Machine specifications, OS versions, Python, databases, rate-limiting configuration, dataset size, and load profile are recorded along with the results of each run.
 
-### 3.2. Правила измерений
+### 3.2. Measurement Guidelines
 
-1. Перед нагрузочным тестом выполняется прогрев сервиса и проверка readiness.
-2. Для каждого сценария выполняется не менее 10 минут измерения после прогрева.
-3. Задержка измеряется на стороне клиента и отдельно на стороне сервера, чтобы не смешивать время обработки с сетевой задержкой.
-4. Для latency публикуются как минимум p50, p95, p99 и доля ошибок.
-5. Каждый ключевой тест повторяется минимум три раза; в отчёт заносится каждый прогон и итоговое значение.
-6. При изменении конфигурации или кода результаты считаются новым прогоном.
-7. Успешным считается только результат, удовлетворяющий порогу требования, а не среднее значение, скрывающее отдельные нарушения.
+1. Before the load test, the service is warmed up and its readiness is verified.
+2. For each scenario, measurements are taken for at least 10 minutes after the warm-up.
+3. Latency is measured on the client side and separately on the server side to avoid mixing processing time with network latency.
+4. For latency, at least the p50, p95, p99, and error rate are published.
+5. Each key test is repeated at least three times; each run and the final result are recorded in the report.
+6. If the configuration or code is changed, the results are considered a new run.
+7. Only a result that meets the requirement threshold is considered successful; an average value that masks individual violations is not.
 
-## 4. Функциональные и интеграционные сценарии
+## 4. Functional and Integration Test Scenarios
 
-| ID теста | Сценарий | Ожидаемый результат | Требования |
+| Test ID | Scenario | Expected Result | Requirements |
 |---|---|---|---|
-| F-01 | Создать пользователя и войти с корректным паролем | Вход разрешён, пароль не возвращается и не записывается в лог | FR-001, FR-002 |
-| F-02 | Ввести неверный пароль для существующего и неизвестного логина | Одинаковый внешний отказ без раскрытия существования пользователя | API-005, SEC-007 |
-| F-03 | Подключить TOTP по QR/`otpauth` URI | Authenticator принимает данные, корректный код проходит проверку | FR-003 |
-| F-04 | Проверить коды в разрешённых и запрещённых временных шагах | Принимаются только шаги в настроенном окне дрейфа | FR-004, NFR-003 |
-| F-05 | Отправить один TOTP-код параллельно дважды | Не более одного успешного ответа; повтор отклоняется | FR-005 |
-| F-06 | Создать и использовать recovery code | Код принимается один раз и становится недействительным | FR-006, SEC-003 |
-| F-07 | Выполнить admin reset TOTP | Старый секрет не принимается, операция и target записываются в аудит | FR-009, SEC-006 |
-| F-08 | Проверить роли `user` и `admin` | `user` получает 403 на admin endpoint, `admin` получает доступ после входа | FR-010, SEC-008 |
-| F-09 | Проверить сессию и logout/revocation | После logout или истечения срока защищённый endpoint отклоняет запрос | SEC-005 |
-| F-10 | Обратиться к REST endpoint без credential и с credential другой роли | Запрос отклоняется, секреты не попадают в ответ или лог | API-001, API-002 |
-| F-11 | Пройти reverse-proxy сценарий forward-auth | Только полная парольная и TOTP-аутентификация даёт положительный результат | API-003 |
-| F-12 | Передать поддельные identity headers | Upstream получает только нормализованные headers от сервиса | API-004 |
+| F-01 | Create a user and log in with the correct password | Login permitted; the password is not returned and is not logged | FR-001, FR-002 |
+| F-02 | Enter an incorrect password for an existing but unknown username | Identical external failure without revealing the user’s existence | API-005, SEC-007 |
+| F-03 | Set up TOTP via QR code or `otpauth` URI | The authenticator receives the data; a valid code passes verification | FR-003 |
+| F-04 | Check codes within allowed and disallowed time windows | Only codes within the configured drift window are accepted | FR-004, NFR-003 |
+| F-05 | Send a single TOTP code twice simultaneously | No more than one successful response; the second is rejected | FR-005 |
+| F-06 | Create and use a recovery code | The code is accepted only once and then becomes invalid | FR-006, SEC-003 |
+| F-07 | Perform a TOTP admin reset | The old secret is not accepted; the operation and target are logged in the audit | FR-009, SEC-006 |
+| F-08 | Verify the `user` and `admin` roles | `user` receives a 403 error on the admin endpoint; `admin` gains access after logging in | FR-010, SEC-008 |
+| F-09 | Verify session and logout/revocation | After logout or expiration, the secure endpoint rejects the request | SEC-005 |
+| F-10 | Access a REST endpoint without credentials or with credentials for a different role | The request is rejected; secrets are not included in the response or log | API-001, API-002 |
+| F-11 | Perform a reverse-proxy scenario for forward authentication | Only full password and TOTP authentication yield a positive result | API-003 |
+| F-12 | Pass on fake identity headers | Upstream receives only normalized headers from the service | API-004 |
 
-## 5. Security-тесты
+## 5. Security Tests
 
-Security-тесты связываются с угрозами из требований DIP-26:
+Security tests address the threats listed in the DIP-26 requirements:
 
-| Угроза | Проверка | Критерий прохождения | Требования |
+| Threat | Test | Passing Criteria | Requirements |
 |---|---|---|---|
-| T-01 Spoofing | пароль без TOTP, просроченная сессия, поддельная identity | доступ не предоставляется | FR-003–FR-005, API-003, SEC-005 |
-| T-02 Credential theft | инспекция БД, ответов и логов | нет plaintext password, TOTP secret, recovery code, token или encryption key | FR-002, SEC-002, SEC-003, SEC-007 |
-| T-03 Brute force | серия неверных password/TOTP/recovery запросов | после порога применяется временная блокировка, ошибка не раскрывает детали | SEC-004, API-005 |
-| T-04 Replay | повтор уже принятого TOTP шага и recovery code | повторный запрос отклоняется, конкурентный тест даёт максимум один успех | FR-005, FR-006 |
-| T-05 Tampering | изменение роли, пользователя, ciphertext и audit record | неавторизованное изменение отклоняется; повреждённый ciphertext не расшифровывается | SEC-002, SEC-006, SEC-008 |
-| T-06 Repudiation | login, enrollment, reset, role change и lockout | событие содержит actor/target, timestamp, type, result и request id | SEC-006 |
-| T-07 Information disclosure | ошибки, health endpoint, поддельные headers, скан логов | нет различия неизвестного логина, stack trace и секретов | API-004, API-005, SEC-007, SEC-009, SEC-012 |
-| T-08 Denial of service | большой поток запросов и oversized input | сервис остаётся доступным для легитимного запроса, невалидный размер получает 413/422 | SEC-004, SEC-009, PERF-003 |
+| T-01 Spoofing | password without TOTP, expired session, fake identity | access denied | FR-003–FR-005, API-003, SEC-005 |
+| T-02 Credential theft | inspection of databases, responses, and logs | no plaintext password, TOTP secret, recovery code, token, or encryption key | FR-002, SEC-002, SEC-003, SEC-007 |
+| T-03 Brute force | series of incorrect password/TOTP/recovery requests | a temporary lockout is applied after the threshold is reached; the error message does not provide details | SEC-004, API-005 |
+| T-04 Replay | replay of a previously accepted TOTP step or recovery code | repeat requests are rejected; a concurrent test allows for a maximum of one success | FR-005, FR-006 |
+| T-05 Tampering | modification of role, user, ciphertext, and audit record | unauthorized modifications are rejected; corrupted ciphertext is not decrypted | SEC-002, SEC-006, SEC-008 |
+| T-06 Repudiation | login, enrollment, reset, role change, and lockout | the event contains actor/target, timestamp, type, result, and request ID | SEC-006 |
+| T-07 Information Disclosure | errors, health endpoint, forged headers, log scanning | no distinction between unknown login, stack trace, and secrets | API-004, API-005, SEC-007, SEC-009, SEC-012 |
+| T-08 Denial of Service | high volume of requests and oversized input | the service remains available for legitimate requests; invalid sizes receive a 413/422 response | SEC-004, SEC-009, PERF-003 |
 
-Дополнительно проверяются HTTPS с сертификатом внутреннего CA, отсутствие
-внешних запросов и защита cookie-флагами `Secure`, `HttpOnly` и подходящим
-`SameSite` (SEC-001, SEC-005, NFR-001).
+Additionally, HTTPS connections with an internal CA certificate are checked, as well as the absence of
+external requests and protection via the `Secure`, `HttpOnly`, and appropriate
+`SameSite` cookie flags (SEC-001, SEC-005, NFR-001).
 
-## 6. Метрики и пороги приёмки
+## 6. Metrics and Acceptance Thresholds
 
-| Метрика | Метод измерения | Условия | Целевой результат | Связанные требования |
+| Metric | Measurement Method | Conditions | Target Result | Related Requirements |
 |---|---|---|---|---|
-| Задержка полного входа | 20 RPS, password + TOTP, 10 минут после прогрева | 2 vCPU, 2 GB RAM, SQLite, локальный SSD | p95 не более 500 мс, error rate не более 1% | PERF-001 |
-| Задержка forward-auth | 50 RPS с действующими сессиями, 10 минут | тот же стенд, без внешнего proxy latency | p95 не более 100 мс, error rate не более 1% | PERF-002 |
-| Блокировка при переборе | 100 RPS неверных credentials с одним корректным запросом | фиксированный порог lockout и timeout из конфигурации | атакующие запросы блокируются; корректный запрос получает не более 5 с дополнительной задержки | SEC-004, PERF-003 |
-| Отклонение повторного TOTP | два последовательных и два параллельных запроса с тем же кодом/шагом | одна учётная запись, одна активная сессия | первый запрос успешен, все повторы отклонены; максимум один успех | FR-005 |
-| Отклонение повторного recovery code | два запроса с одним recovery code | код предварительно выдан и ещё не использован | первый запрос успешен, второй отклонён | FR-006, SEC-003 |
-| Допустимый дрейф часов | тестовые часы устанавливаются по обе стороны от текущего шага | окно задаётся конфигурацией, например ±1 шаг | коды внутри окна принимаются, за пределами окна отклоняются | FR-004, NFR-003 |
-| Внешние сетевые обращения | packet capture при установке, запуске и входе | заблокированный egress, внутренние NTP и CA | 0 DNS/HTTP-запросов к внешним доменам | NFR-001 |
-| Время старта | 5 последовательных запусков контейнера/сервиса | исправные БД и внешний ключ | readiness становится healthy не позднее 30 секунд в каждом запуске | PERF-004 |
-| Память | RSS после 5 минут idle и после smoke test | без reverse proxy и отдельного учёта БД | не более 512 MB, без OOM | PERF-005 |
+| Full login latency | 20 RPS, password + TOTP, 10 minutes after warm-up | 2 vCPUs, 2 GB RAM, SQLite, local SSD | p95 ≤ 500 ms, error rate ≤ 1% | PERF-001 |
+| Forward-auth latency | 50 RPS with active sessions, 10 minutes | same test setup, without external proxy latency | p95 ≤ 100 ms, error rate ≤ 1% | PERF-002 |
+| Brute-Force Lockout | 100 RPS of invalid credentials with one valid request | fixed lockout and timeout thresholds specified in the configuration | malicious requests are blocked; a valid request incurs no more than a 5-second additional delay | SEC-004, PERF-003 |
+| Rejection of Repeated TOTP | two consecutive and two parallel requests with the same code/step | one account, one active session | the first request succeeds, all repeats are rejected; maximum of one success | FR-005 |
+| Rejection of duplicate recovery code | Two requests with the same recovery code | Code has been issued but not yet used | First request successful, second rejected | FR-006, SEC-003 |
+| Permissible clock drift | Test clocks are set on either side of the current step | The window is defined by configuration, e.g., ±1 step | Codes within the window are accepted; those outside the window are rejected | FR-004, NFR-003 |
+| External network traffic | packet capture during installation, startup, and login | blocked egress, internal NTP and CA | 0 DNS/HTTP requests to external domains | NFR-001 |
+| Startup time | 5 consecutive container/service launches | healthy databases and external key | readiness status becomes “healthy” within 30 seconds at most during each launch | PERF-004 |
+| Memory | RSS after 5 minutes of idle time and after the smoke test | without a reverse proxy and separate database logging | no more than 512 MB, no OOM | PERF-005 |
 
-Фактическое значение окна времени, порог lockout и длительность блокировки должны быть указаны в конфигурации и отчёте. Пример `±1` шаг является проверяемым сценарием, а не требованием скрыто изменить настройки проекта.
+The actual time window value, lockout threshold, and lockout duration must be specified in the configuration and report. The example `±1` step is a test scenario, not a requirement to secretly change project settings.
 
-## 7. Базовые решения для сравнения
+## 7. Basic Solutions for Comparison
 
-### 7.1. Вход только по паролю
+### 7. Password-Only Login
 
-Первое базовое решение — тот же сервис без второго фактора, только с логином и паролем. На одинаковых данных сравниваются:
+The first basic solution is the same service without two-factor authentication, using only a username and password. The following are compared using identical data:
 
-- успешность и задержка входа;
-- число успешных входов при сценариях с украденным паролем;
-- устойчивость к brute force;
-- наличие replay-защиты и аудита;
-- сетевые зависимости и удобство развёртывания.
+- login success rate and login delay;
+- number of successful logins in scenarios involving a stolen password;
+- resistance to brute-force attacks;
+- presence of replay protection and audit capabilities;
+- network dependencies and ease of deployment.
 
-Ожидается, что парольный baseline будет проще и может иметь меньшую задержку, но не обеспечит защиту от использования украденного пароля. Сравнение используется для доказательства практической ценности второго фактора, а не для утверждения, что более высокая задержка сама по себе является преимуществом.
+The password-based baseline is expected to be simpler and may have less latency, but it will not provide protection against the use of a stolen password. The comparison is used to demonstrate the practical value of the second factor, not to argue that higher latency is an advantage in and of itself.
 
-### 7.2. privacyIDEA (дополнительный baseline)
+### 7.2. privacyIDEA (Additional Baseline)
 
-Если доступна тестовая установка privacyIDEA, она используется как внешний baseline для функционального сравнения TOTP и административного управления. Сравнение проводится в той же изолированной сети и по тем же сценариям: enrollment, вход, повторный код, блокировка, аудит, время развёртывания и ресурсы.
+If a privacyIDEA test installation is available, it is used as an external baseline for functional comparisons of TOTP and administrative management. The comparison is conducted on the same isolated network and using the same scenarios: enrollment, login, one-time code, lockout, audit, deployment time, and resources.
 
-Результаты privacyIDEA не заменяют проверку требований собственного сервиса: они показывают, как MVP соотносится с существующим решением. Если установка privacyIDEA невозможна в офлайн-стенде, это фиксируется как ограничение, а обязательным baseline остаётся вход только по паролю.
+The results from privacyIDEA do not replace a review of your own service’s requirements: they show how the MVP compares to the existing solution. If privacyIDEA cannot be installed on an offline test bench, this is noted as a limitation, and password-only login remains the mandatory baseline.
 
-## 8. Как будет доказано достижение цели проекта
+## 8. How will the achievement of the project’s goal be demonstrated?
 
-Цель считается достигнутой, если одновременно выполнены следующие условия:
+The goal is considered achieved if all of the following conditions are met simultaneously:
 
-1. Все требования `MUST` из DIP-26 имеют автоматический тест или воспроизводимый приёмочный сценарий.
-2. В изолированной сети без внешнего egress проходят enrollment, полный login с двумя факторами, recovery, admin reset и forward-auth.
-3. Security-тесты не выявляют plaintext credentials, обход RBAC, повторное использование принятого кода, утечку секретов в логах или spoofing identity headers.
-4. Метрики из раздела 6 достигают установленных порогов либо каждое отклонение явно объяснено в отчёте и связано с невыполненным приоритетом `SHOULD`.
-5. Результат сравнения с парольным baseline показывает, что TOTP добавляет проверяемый второй фактор без зависимости от внешних сервисов.
-6. Конфигурация стенда, версии, команды запуска тестов, сырые результаты, ошибки и известные ограничения сохранены в отчёте о тестировании.
+1. All `MUST` requirements from DIP-26 have an automated test or a reproducible acceptance test scenario.
+2. Enrollment, full two-factor login, recovery, admin reset, and forward authentication are performed on an isolated network with no external egress.
+3. Security tests do not reveal plaintext credentials, RBAC bypasses, reuse of accepted codes, leaks of secrets in logs, or spoofing of identity headers.
+4. The metrics from Section 6 meet the established thresholds, or each deviation is explicitly explained in the report and is related to an unmet `SHOULD` priority.
+5. The comparison with the password-based baseline shows that TOTP adds a verifiable second factor without relying on external services.
+6. The test suite configuration, versions, test execution commands, raw results, errors, and known limitations are recorded in the test report.
 
-Для каждого теста сохраняются ID, дата, commit, конфигурация, входные данные, ожидаемый результат, фактический результат и статус `PASS`/`FAIL`. Данные тестов должны быть воспроизводимыми и не содержать секретов.
+For each test, the ID, date, commit, configuration, input data, expected result, actual result, and `PASS`/`FAIL` status are stored. Test data must be reproducible and must not contain any secrets.
 
-## 9. Матрица трассировки
+## 9. Trace Matrix
 
-| Группа проверки | Требования DIP-26 |
+| Verification Group | DIP-26 Requirements |
 |---|---|
-| Пароль, TOTP, recovery и replay | FR-001–FR-006, FR-009, SEC-002–SEC-005 |
-| Пользователи, RBAC и аудит | FR-008–FR-010, SEC-006, SEC-008 |
-| REST API и forward-auth | API-001–API-005 |
-| HTTPS, валидация и защита логов | SEC-001, SEC-007, SEC-009, SEC-010 |
-| Offline и воспроизводимое развёртывание | NFR-001–NFR-004, NFR-006 |
-| Backup, recovery после рестарта и health | NFR-005, NFR-008, SEC-012 |
-| Вход, forward-auth и отказоустойчивость | PERF-001–PERF-005 |
-| Будущие функции | API-006–API-007, SEC-011, SEC-012, NFR-007, NFR-009, NFR-010 |
+| Passwords, TOTP, recovery, and replay | FR-001–FR-006, FR-009, SEC-002–SEC-005 |
+| Users, RBAC, and auditing | FR-008–FR-010, SEC-006, SEC-008 |
+| REST API and forward authentication | API-001–API-005 |
+| HTTPS, validation, and log protection | SEC-001, SEC-007, SEC-009, SEC-010 |
+| Offline and reproducible deployment | NFR-001–NFR-004, NFR-006 |
+| Backup, post-restart recovery, and health | NFR-005, NFR-008, SEC-012 |
+| Login, forward authentication, and fault tolerance | PERF-001–PERF-005 |
+| Future Features | API-006–API-007, SEC-011, SEC-012, NFR-007, NFR-009, NFR-010 |
 
-## 10. Ограничения и риски оценки
+## 10. Evaluation Limitations and Risks
 
-- Результаты производительности относятся к указанному single-node стенду и не доказывают характеристики multi-instance deployment.
-- SQLite и локальный SSD могут давать другие результаты на серверном оборудовании.
-- Тестовый внутренний CA и NTP моделируют инфраструктуру закрытой сети, но не заменяют проверку конкретной инфраструктуры организации.
-- Проверка WebAuthn, OIDC, LDAP/AD, RADIUS и SIEM не входит в обязательную оценку MVP.
-- Недоступность privacyIDEA не блокирует оценку собственного сервиса, если парольный baseline и все обязательные сценарии выполнены.
+- Performance results apply to the specified single-node test environment and do not demonstrate the characteristics of a multi-instance deployment.
+- SQLite and a local SSD may produce different results on server hardware.
+- The test internal CA and NTP simulate a closed network infrastructure but do not replace verification of an organization’s specific infrastructure.
+- Verification of WebAuthn, OIDC, LDAP/AD, RADIUS, and SIEM is not included in the mandatory MVP assessment.
+- The unavailability of privacyIDEA does not prevent the assessment of your own service if the password baseline and all mandatory scenarios have been completed.

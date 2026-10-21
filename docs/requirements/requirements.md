@@ -1,134 +1,134 @@
-# Спецификация требований
+# Requirements Specification
 
-## 1. Назначение и область применения
+## 1. Purpose and Scope
 
-Документ определяет проверяемые требования к веб-сервису локальной двухфакторной аутентификации для изолированной корпоративной сети. Требования основаны на [proposal проекта](../proposal.md), [ADR по технологиям](../architecture/adr/01-backend-fastapi.md) и материалах [literature review](../literature-review/review.md).
+This document defines the test requirements for a local two-factor authentication web service for an isolated corporate network. The requirements are based on the [project proposal](../proposal.md), the [technology ADR](../architecture/adr/01-backend-fastapi.md), and the [literature review](../literature-review/review.md).
 
-В MVP входят логин и пароль, TOTP, резервные коды, RBAC, аудит, REST API, forward-auth и автономное развёртывание с HTTPS. WebAuthn, OIDC, LDAP/AD, RADIUS и экспорт в SIEM относятся к дополнительным целям и не являются обязательными для первой версии.
+The MVP includes login and password, TOTP, backup codes, RBAC, auditing, REST API, forward authentication, and standalone deployment with HTTPS. WebAuthn, OIDC, LDAP/AD, RADIUS, and SIEM export are considered optional features and are not required for the first release.
 
-### 1.1. Приоритеты
+### 1.1. Priorities
 
-- **MUST** — обязательное требование MVP; невыполнение блокирует приёмку.
-- **SHOULD** — важное требование; допускается отложить только с обоснованием.
-- **COULD** — дополнительная функция; не блокирует приёмку MVP.
+- **MUST** — a mandatory requirement for the MVP; failure to meet this requirement blocks acceptance.
+- **SHOULD** — an important requirement; may be deferred only with justification.
+- **COULD** — an optional feature; does not block acceptance of the MVP.
 
-### 1.2. Проверяемость
+### 1.2. Testability
 
-Для каждого требования указан критерий приёма. Проверка выполняется модульным, интеграционным или security-тестом, ручным сценарием приёма либо измерением в тестовой среде. В тестах нельзя использовать реальные пароли, ключи, персональные данные или production-секреты.
+An acceptance criterion is specified for each requirement. Verification is performed through unit, integration, or security testing; a manual acceptance test scenario; or a measurement in a test environment. Real passwords, keys, personal data, or production secrets must not be used in tests.
 
-### 1.3. Границы MVP
+### 1.3. MVP Boundaries
 
-В обязательный MVP входят только требования с приоритетом **MUST**. Требования **SHOULD** и **COULD** фиксируют важные направления развития и проверяются только при наличии времени и соответствующей реализации. Их невыполнение само по себе не блокирует первую демонстрацию проекта.
+The mandatory MVP includes only requirements with a **MUST** priority. **SHOULD** and **COULD** requirements outline important areas for development and are tested only if time permits and the appropriate implementation is available. Failure to meet these requirements does not, in and of itself, block the project’s first demonstration.
 
-## 2. Контекст угроз
+## 2. Threat Context
 
-Модель ниже — минимальная STRIDE-ориентированная декомпозиция для MVP.
-Угрозы используются в требованиях как ссылки на то, какой риск контролируется.
+The model below is the minimal STRIDE-oriented decomposition for the MVP.
+Threats are used in the requirements as references to the specific risks being controlled.
 
-| ID | Угроза | Пример | Требуемые меры |
+| ID | Threat | Example | Required Measures |
 |---|---|---|---|
-| T-01 | Spoofing | украденный пароль или TOTP-код используется для входа | два фактора, одноразовость кода, rate limiting, безопасные сессии |
-| T-02 | Credential theft | пароль, TOTP-секрет или recovery code прочитан из БД/логов | Argon2id, AES-256-GCM, внешний ключ, маскирование секретов |
-| T-03 | Brute force | перебор пароля, TOTP или recovery code | throttling, блокировка, единообразные ошибки |
-| T-04 | Replay | повторное использование уже принятого TOTP или recovery code | атомарная фиксация использованного шага/кода |
-| T-05 | Tampering | изменение пользователя, роли или записи аудита | RBAC, транзакции, append-only audit log, контроль целостности |
-| T-06 | Repudiation | пользователь или администратор отрицает действие | аудит с actor, временем, типом операции и результатом |
-| T-07 | Information disclosure | раскрытие существования пользователя или внутренней конфигурации | одинаковые ошибки, минимальные ответы, HTTPS, запрет секретов в логах |
-| T-08 | Denial of service | большое число запросов блокирует вход или API | rate limiting, лимиты размера, таймауты, наблюдаемость |
+| T-01 | Spoofing | A stolen password or TOTP code is used to log in | Two-factor authentication, one-time codes, rate limiting, secure sessions |
+| T-02 | Credential theft | password, TOTP secret, or recovery code read from the database/logs | Argon2id, AES-256-GCM, external key, secret masking |
+| T-03 | Brute force | brute-forcing a password, TOTP, or recovery code | throttling, blocking, consistent errors |
+| T-04 | Replay | reuse of a previously accepted TOTP or recovery code | atomic logging of the used step/code |
+| T-05 | Tampering | Modification of a user, role, or audit entry | RBAC, transactions, append-only audit log, integrity checks |
+| T-06 | Repudiation | A user or administrator denies performing an action | Audit entries including actor, time, operation type, and result |
+| T-07 | Information Disclosure | Disclosure of a user’s existence or internal configuration | Consistent error messages, minimal responses, HTTPS, prohibition of secrets in logs |
+| T-08 | Denial of service | A large number of requests blocks access or the API | rate limiting, size limits, timeouts, observability |
 
-## 3. Функциональные требования
+## 3. Functional Requirements
 
-| ID | Приоритет | Требование | Критерий приёма | Угрозы/связи |
+| ID | Priority | Requirement | Acceptance Criteria | Threats/Implications |
 |---|---|---|---|---|
-| FR-001 | MUST | Система должна предоставлять вход по уникальному логину и паролю. | Интеграционный тест создаёт пользователя, проверяет успешный вход с правильными данными и отказ с неправильным паролем. | T-01, T-03 |
-| FR-002 | MUST | Пароли должны храниться только как Argon2id-хеши с уникальной солью; исходный пароль нельзя вернуть через API или аудит. | Проверка схемы БД не находит plaintext; два одинаковых тестовых пароля имеют разные хеши; API и логи не содержат исходное значение. | T-02 |
-| FR-003 | MUST | Пользователь должен иметь возможность подключить TOTP через секрет и QR-код в формате, совместимом с RFC 6238. | Тестовый authenticator считывает QR/otpauth URI и успешно проходит проверку по тестовым векторам RFC 6238. | T-01 |
-| FR-004 | MUST | Система должна проверять TOTP с ограниченным окном рассинхронизации времени. | Для настроенного окна принимаются только разрешённые временные шаги; код вне окна отклоняется; значение окна отображается в конфигурации. | T-01, T-04 |
-| FR-005 | MUST | Один и тот же TOTP-код/временной шаг для пользователя должен приниматься не более одного раза. | Два параллельных запроса с одним кодом дают не более одного успеха; повторный запрос получает отказ; проверка выполняется транзакционно. | T-04 |
-| FR-006 | MUST | Система должна поддерживать резервные коды восстановления. | При enrollment создаётся заданное число кодов; каждый код принимается один раз, после использования помечается использованным и повторно отклоняется. | T-01, T-02, T-04 |
-| FR-007 | SHOULD | Пользователь должен иметь возможность завершить активные сессии и сменить пароль после успешной аутентификации. | Интеграционный тест отзывает сессию, после чего защищённый endpoint возвращает отказ; смена пароля инвалидирует прежнюю password credential. | T-01, T-02 |
-| FR-008 | SHOULD | Администратор должен иметь возможность создать, заблокировать, разблокировать и деактивировать пользователя. | Для каждой операции есть успешный и отказавший по правам тест; деактивированный пользователь не входит даже с корректными credentials. | T-05, T-06 |
-| FR-009 | MUST | Администратор должен иметь возможность сбросить TOTP-устройство пользователя с обязательным подтверждением операции. | После reset прежний TOTP-секрет не принимается, новый enrollment возможен, а операция записана в аудит с actor и target. | T-02, T-05, T-06 |
-| FR-010 | MUST | Система должна поддерживать роли как минимум `user` и `admin`. | Пользователь с ролью `user` получает HTTP 403 на admin endpoints; `admin` получает доступ только после аутентификации. | T-05 |
-| FR-011 | SHOULD | Система должна предоставлять административный и пользовательский web-интерфейс либо эквивалентные API-сценарии, описанные в документации. | Приёмочный сценарий выполняет enrollment, вход, recovery и reset без ручного изменения БД. | FR-003, FR-006, FR-009 |
-| FR-012 | SHOULD | Пользователь должен видеть состояние 2FA, дату enrollment и наличие активных recovery codes без раскрытия их значений. | API/UI показывает статус и количество доступных кодов, но не возвращает TOTP-секрет или ранее созданные коды. | T-02, T-07 |
+| FR-001 | MUST | The system must allow login using a unique username and password. | The integration test creates a user, verifies a successful login with the correct credentials, and verifies a failed login with an incorrect password. | T-01, T-03 |
+| FR-002 | MUST | Passwords must be stored only as Argon2id hashes with a unique salt; the original password must not be recoverable via the API or through an audit. | A database schema check finds no plaintext; two identical test passwords have different hashes; the API and logs do not contain the original value. | T-02 |
+| FR-003 | MUST | The user must be able to set up TOTP using a secret and a QR code in a format compatible with RFC 6238. | A test authenticator reads the QR/otpauth URI and successfully passes the RFC 6238 test vectors. | T-01 |
+| FR-004 | MUST | The system must validate TOTP with a limited time desynchronization window. | Only allowed time steps are accepted for the configured window; codes outside the window are rejected; the window value is displayed in the configuration. | T-01, T-04 |
+| FR-005 | MUST | The same TOTP code/time step for a user must be accepted no more than once. | Two concurrent requests with the same code result in no more than one successful response; a repeat request is rejected; validation is performed on a transactional basis. | T-04 |
+| FR-006 | MUST | The system must support backup recovery codes. | During enrollment, a specified number of codes are generated; each code is accepted once, marked as used after use, and subsequently rejected. | T-01, T-02, T-04 |
+| FR-007 | SHOULD | The user must be able to end active sessions and change their password after successful authentication. | The integration test terminates the session, after which the secure endpoint returns a failure; changing the password invalidates the previous password credential. | T-01, T-02 |
+| FR-008 | SHOULD | An administrator must be able to create, lock, unlock, and deactivate a user. | For each operation, there is a success test and a permission-based failure test; a deactivated user cannot log in even with valid credentials. | T-05, T-06 |
+| FR-009 | MUST | The administrator must be able to reset a user’s TOTP device, with mandatory confirmation of the operation. | After the reset, the previous TOTP secret is no longer accepted; re-enrollment is possible, and the operation is logged in the audit trail with the actor and target. | T-02, T-05, T-06 |
+| FR-010 | MUST | The system must support at least the `user` and `admin` roles. | A user with the `user` role receives an HTTP 403 response on admin endpoints; `admin` users gain access only after authentication. | T-05 |
+| FR-011 | SHOULD | The system must provide an administrative and user web interface or equivalent API scenarios as described in the documentation. | The acceptance test scenario performs enrollment, login, recovery, and reset without manually modifying the database. | FR-003, FR-006, FR-009 |
+| FR-012 | SHOULD | The user must be able to view the 2FA status, the enrollment date, and whether there are any active recovery codes, without revealing their values. | The API/UI displays the status and the number of available codes, but does not return the TOTP secret or previously generated codes. | T-02, T-07 |
 
-## 4. Требования к API и интеграции
+## 4. API and Integration Requirements
 
-| ID | Приоритет | Требование | Критерий приёма | Угрозы/связи |
+| ID | Priority | Requirement | Acceptance Criteria | Threats/Relationships |
 |---|---|---|---|---|
-| API-001 | MUST | Система должна предоставлять REST API для управления пользователями, enrollment, входа, проверки 2FA и администрирования. | OpenAPI-документ содержит endpoint для каждого MVP-сценария; contract tests проверяют коды ответа и JSON-схемы. | FR-001…FR-011 |
-| API-002 | MUST | Защищённые REST endpoints должны требовать действующую сессию или сервисную credential с минимальными правами. | Запрос без credential и с credential другой роли получает отказ; credential не появляется в response body или логах. | T-01, T-05, T-07 |
-| API-003 | MUST | Forward-auth endpoint должен возвращать положительный результат только после полной проверки первого и второго факторов. | Защищённый proxy-сценарий пропускает только валидную сессию; пароль без TOTP и просроченная сессия отклоняются. | T-01 |
-| API-004 | MUST | Forward-auth должен передавать upstream только нормализованные identity headers, а входящие spoofed headers должны быть удалены или перезаписаны. | Интеграционный тест отправляет поддельный header и проверяет, что upstream получает только identity, установленную сервисом. | T-05, T-07 |
-| API-005 | MUST | API должен использовать единый формат ошибок без различения «логин не существует» и «пароль неверен». | Для неизвестного логина и неверного пароля проверяется одинаковый внешний статус/сообщение; детали остаются только в защищённом аудите. | T-03, T-07 |
-| API-006 | SHOULD | Система должна поддерживать версионирование публичного API. | Версия присутствует в URL или заголовке, а несовместимый запрос получает документированную ошибку. | Эксплуатация |
-| API-007 | COULD | Система может реализовать локальный OIDC provider. | Отдельный набор OIDC contract tests проходит без внешнего IdP; отсутствие функции не блокирует MVP. | Расширение |
+| API-001 | MUST | The system must provide a REST API for user management, enrollment, login, 2FA verification, and administration. | The OpenAPI document contains endpoints for each MVP scenario; contract tests verify response codes and JSON schemas. | FR-001…FR-011 |
+| API-002 | MUST | Secured REST endpoints must require a valid session or service credential with minimal permissions. | Requests without credentials or with credentials for a different role are rejected; credentials do not appear in the response body or in logs. | T-01, T-05, T-07 |
+| API-003 | MUST | The forward-auth endpoint must return a positive result only after fully verifying the first and second factors. | The secure proxy scenario allows only valid sessions to pass through; passwords without TOTP and expired sessions are rejected. | T-01 |
+| API-004 | MUST | Forward-auth must pass only normalized identity headers to the upstream, and any incoming spoofed headers must be removed or overwritten. | The integration test sends a spoofed header and verifies that the upstream receives only the identity set by the service. | T-05, T-07 |
+| API-005 | MUST | The API must use a uniform error format without distinguishing between “username does not exist” and “incorrect password.” | For an unknown username and an incorrect password, the same external status/message is returned; details are retained only in the secure audit log. | T-03, T-07 |
+| API-006 | SHOULD | The system should support versioning of the public API. | The version is included in the URL or header, and an incompatible request returns a documented error. | Operation |
+| API-007 | COULD | The system may implement a local OIDC provider. | A separate set of OIDC contract tests runs without an external IdP; the absence of this feature does not block the MVP. | Extension |
 
-## 5. Требования безопасности
+## 5. Security Requirements
 
-| ID | Приоритет | Требование | Критерий приёма | Угрозы/связи |
+| ID | Priority | Requirement | Acceptance Criteria | Threats/Correlations |
 |---|---|---|---|---|
-| SEC-001 | MUST | Все внешние HTTP-соединения должны использовать HTTPS с сертификатом внутреннего CA; production HTTP должен быть отключён или перенаправляться безопасным способом. | Security-тест отклоняет plaintext production endpoint; TLS-соединение проверяется сертификатом тестового внутреннего CA. | T-02, T-07 |
-| SEC-002 | MUST | TOTP-секреты должны храниться в зашифрованном виде AES-256-GCM; ключ шифрования должен находиться вне БД. | При чтении БД отсутствует plaintext secret; расшифровка без внешнего ключа невозможна; изменение ciphertext вызывает ошибку аутентификации. | T-02, T-05 |
-| SEC-003 | MUST | Recovery codes должны храниться в виде односторонних хешей и не должны повторно отображаться после создания. | Инспекция БД не находит plaintext code; API показывает значение только в ответе enrollment; повторный запрос его не возвращает. | T-02, T-04 |
-| SEC-004 | MUST | Попытки входа, TOTP и recovery должны ограничиваться по пользователю и источнику запроса; после порога должна применяться временная блокировка. | Нагрузочный security-тест превышает настроенный порог и получает блокировку; после timeout корректный вход снова возможен. | T-03, T-08 |
-| SEC-005 | MUST | Сессии должны иметь случайный идентификатор, срок действия, logout/revocation и безопасные cookie-флаги (`Secure`, `HttpOnly`, подходящий `SameSite`). | Automated browser/API test проверяет entropy/уникальность, срок, отзыв и все cookie-флаги в HTTPS-режиме. | T-01, T-02 |
-| SEC-006 | MUST | Все административные операции и значимые события аутентификации должны записываться в append-only audit log. | Для login success/failure, enrollment, reset, role change и lockout найдены записи с event type, actor/target, timestamp, result и request id; обычный пользователь не может изменить или удалить запись. | T-05, T-06 |
-| SEC-007 | MUST | В аудит и application logs нельзя записывать пароли, TOTP-секреты, recovery codes, session tokens и ключи шифрования. | Негативные тесты с уникальными canary secrets сканируют все тестовые логи и не находят значения. | T-02, T-07 |
-| SEC-008 | MUST | Административные endpoints должны применять RBAC и принцип наименьших привилегий. | Matrix test проверяет все роли и endpoints; любой доступ вне разрешённой матрицы возвращает 403/404 без раскрытия данных. | T-05 |
-| SEC-009 | MUST | Входные данные должны проходить серверную валидацию, а размер тела, username, password и code — иметь ограничение. | Fuzz/property tests не вызывают 500 или stack trace на невалидных данных; превышение лимита получает 413/422. | T-07, T-08 |
-| SEC-010 | SHOULD | Система должна использовать защиту от CSRF для cookie-based state-changing browser requests либо stateless header-based authentication с документированным обоснованием. | Security-тест поддельного origin без CSRF-токена получает отказ; API-only endpoints требуют явную credential. | T-01, T-05 |
-| SEC-011 | SHOULD | Ротация внешнего ключа шифрования должна быть документирована и поддерживаться административной процедурой без раскрытия секретов. | На тестовой БД выполняется re-encryption старым и новым ключом; после ротации TOTP продолжает работать, старый ключ не используется. | T-02 |
-| SEC-012 | SHOULD | Сервис должен предоставлять health/readiness checks без раскрытия конфигурации и секретов. | Public health response содержит только статус; readiness отражает недоступность БД/ключа, а конфиденциальные значения отсутствуют. | T-07, T-08 |
+| SEC-001 | MUST | All external HTTP connections must use HTTPS with a certificate from an internal CA; production HTTP must be disabled or redirected in a secure manner. | The security test rejects plaintext production endpoints; TLS connections are validated using a certificate from a test internal CA. | T-02, T-07 |
+| SEC-002 | MUST | TOTP secrets must be stored encrypted using AES-256-GCM; the encryption key must be stored outside the database. | When reading the database, no plaintext secret is present; decryption without the external key is impossible; modifying the ciphertext causes an authentication error. | T-02, T-05 |
+| SEC-003 | MUST | Recovery codes must be stored as one-way hashes and must not be revealed again after creation. | A database audit does not find any plaintext codes; the API only returns the value in the enrollment response; a repeat request does not return it. | T-02, T-04 |
+| SEC-004 | MUST | Login attempts, TOTP, and recovery attempts must be limited per user and per request source; a temporary lockout must be applied once the threshold is exceeded. | A load security test exceeds the configured threshold and triggers a lockout; after the timeout, a valid login is possible again. | T-03, T-08 |
+| SEC-005 | MUST | Sessions must have a random identifier, an expiration time, and logout/revocation and secure cookie flags (`Secure`, `HttpOnly`, an appropriate `SameSite` value). | An automated browser/API test verifies entropy/uniqueness, expiration time, revocation, and all cookie flags in HTTPS mode. | T-01, T-02 |
+| SEC-006 | MUST | All administrative operations and significant authentication events must be recorded in an append-only audit log. | For login success/failure, enrollment, reset, role change, and lockout, entries containing the event type, actor/target, timestamp, result, and request ID were found; a regular user cannot modify or delete an entry. | T-05, T-06 |
+| SEC-007 | MUST | Passwords, TOTP secrets, recovery codes, session tokens, and encryption keys must not be logged in audit or application logs. | Negative tests using unique canary secrets scan all test logs and find no matching values. | T-02, T-07 |
+| SEC-008 | MUST | Administrative endpoints must implement RBAC and the principle of least privilege. | A matrix test checks all roles and endpoints; any access outside the permitted matrix returns a 403/404 response without disclosing data. | T-05 |
+| SEC-009 | MUST | Input data must undergo server-side validation, and the body size, username, password, and code must be subject to limits. | Fuzz/property tests do not return a 500 error or a stack trace when invalid data is provided; exceeding the limit results in a 413 or 422 error. | T-07, T-08 |
+| SEC-010 | SHOULD | The system should use CSRF protection for cookie-based, state-changing browser requests or stateless, header-based authentication with a documented justification. | A security test using a spoofed origin without a CSRF token fails; API-only endpoints require explicit credentials. | T-01, T-05 |
+| SEC-011 | SHOULD | The rotation of the external encryption key must be documented and supported by an administrative procedure that does not disclose secrets. | On the test database, re-encryption is performed using both the old and new keys; after rotation, TOTP continues to function, and the old key is not used. | T-02 |
+| SEC-012 | SHOULD | The service should provide health/readiness checks without disclosing configuration or secrets. | The public health response contains only the status; the readiness response indicates that the database or key is unavailable, and no confidential values are included. | T-07, T-08 |
 
-## 6. Нефункциональные требования
+## 6. Non-Functional Requirements
 
-| ID | Приоритет | Требование | Критерий приёма | Угрозы/связи |
+| ID | Priority | Requirement | Acceptance Criteria | Threats/Relationships |
 |---|---|---|---|---|
-| NFR-001 | MUST | Сервис должен запускаться в изолированной сети без DNS/HTTP-запросов к внешним доменам. | В тестовой сети с заблокированным egress выполняются установка, запуск и вход; сетевой capture не содержит внешних запросов. | T-08, автономность |
-| NFR-002 | MUST | Все runtime-зависимости должны поставляться в Docker image или offline package bundle с фиксированными версиями. | На машине без доступа к package registry сервис собирается/запускается из заранее подготовленного bundle; checksum зависимостей совпадает с manifest. | Автономность |
-| NFR-003 | MUST | Время сервера должно синхронизироваться с внутренним NTP либо контролируемо диагностировать рассинхронизацию. | При отклонении часов сверх настроенного порога readiness/diagnostic сообщает ошибку; внешний NTP не используется. | FR-004, T-01 |
-| NFR-004 | MUST | Конфигурация должна подаваться через переменные окружения или файл-шаблон с placeholder values; секреты нельзя хранить в репозитории. | Secret scanning не находит credentials; `.env.example` запускается после заполнения; реальные `.env`, ключи и сертификаты игнорируются Git. | T-02 |
-| NFR-005 | SHOULD | Сервис должен предоставлять резервное копирование и восстановление пользовательских данных и аудита. | На тестовой установке создаётся backup, исходный volume удаляется, восстановление возвращает пользователей, настройки и audit records без plaintext secrets. | T-05, T-06 |
-| NFR-006 | MUST | Развёртывание MVP должно быть воспроизводимым одной документированной командой или последовательностью команд без внешнего сервиса. | Чистая тестовая VM/LAN поднимает сервис по инструкции; после запуска выполняется smoke-test входа и health-check. | Автономность |
-| NFR-007 | SHOULD | Все публичные endpoints должны иметь документацию с назначением, authentication scheme, request/response schema и ошибками. | OpenAPI и руководство содержат 100% MVP endpoints; contract review не находит undocumented public route. | Эксплуатация |
-| NFR-008 | SHOULD | Система должна корректно завершаться и восстанавливаться после перезапуска без потери подтверждённых транзакций. | Kill/restart test не теряет созданного пользователя, использованного recovery code или audit event; незавершённая транзакция откатывается. | T-04, T-05 |
-| NFR-009 | SHOULD | Веб-интерфейс должен быть пригоден для клавиатурной навигации и показывать понятные ошибки без раскрытия security details. | Manual checklist проверяет keyboard-only enrollment/login/recovery; UI не показывает stack trace, secret или различие существования пользователя. | T-07, usable security |
-| NFR-010 | COULD | Проект может поддерживать PostgreSQL для multi-instance deployment. | Отдельный integration profile запускается на PostgreSQL и проходит миграции и базовые auth tests; отсутствие профиля не блокирует SQLite MVP. | Масштабирование |
+| NFR-001 | MUST | The service must run on an isolated network without DNS/HTTP requests to external domains. | Installation, launch, and login are performed on a test network with blocked egress; the network capture contains no external requests. | T-08, autonomy |
+| NFR-002 | MUST | All runtime dependencies must be included in the Docker image or offline package bundle with fixed versions. | On a machine without access to a package registry, the service is built and run from a pre-prepared bundle; the checksum of the dependencies matches the manifest. | Self-containment |
+| NFR-003 | MUST | The server time must be synchronized with the internal NTP or must be monitored to detect desynchronization. | If the clock deviates beyond the configured threshold, readiness/diagnostic reports an error; external NTP is not used. | FR-004, T-01 |
+| NFR-004 | MUST | Configuration must be provided via environment variables or a template file with placeholder values; secrets must not be stored in the repository. | Secret scanning does not detect credentials; `.env.example` is run after being populated; actual `.env` files, keys, and certificates are ignored by Git. | T-02 |
+| NFR-005 | SHOULD | The service must provide backup and restore capabilities for user data and audit records. | On the test environment, a backup is created; the original volume is deleted; and the restore operation restores users, settings, and audit records without plaintext secrets. | T-05, T-06 |
+| NFR-006 | MUST | The MVP deployment must be reproducible by a single documented command or sequence of commands without relying on an external service. | A clean test VM/LAN starts the service according to the instructions; after startup, a login smoke test and a health check are performed. | Autonomy |
+| NFR-007 | SHOULD | All public endpoints must be documented with their purpose, authentication scheme, request/response schema, and error messages. | OpenAPI and the documentation contain 100% of MVP endpoints; a contract review finds no undocumented public routes. | Operations |
+| NFR-008 | SHOULD | The system should shut down and restart correctly without losing any committed transactions. | The kill/restart test does not lose any created users, recovery codes, or audit events; any uncommitted transactions are rolled back. | T-04, T-05 |
+| NFR-009 | SHOULD | The web interface should be suitable for keyboard navigation and display clear error messages without revealing security details. | The manual checklist verifies keyboard-only enrollment, login, and recovery; the UI does not display stack traces, secrets, or whether a user exists. | T-07, usable security |
+| NFR-010 | COULD | The project may support PostgreSQL for multi-instance deployment. | A separate integration profile runs on PostgreSQL and undergoes migrations and basic auth tests; the absence of this profile does not block the SQLite MVP. | Scalability |
 
-## 7. Производительность и ёмкость
+## 7. Performance and Capacity
 
-Пороговые значения ниже являются целями приёма для одной инстанции MVP на тестовой машине с не менее чем 2 vCPU, 2 GB RAM и локальным SSD. В отчёте должны быть указаны характеристики машины, размер набора данных и профиль нагрузки. Измеряется время ответа сервера без сетевой задержки клиента.
+The thresholds listed below are acceptance criteria for a single MVP instance on a test machine with at least 2 vCPUs, 2 GB of RAM, and a local SSD. The report must specify the machine’s specifications, the size of the dataset, and the workload profile. Server response time is measured without client-side network latency.
 
-| ID | Приоритет | Требование | Критерий приёма |
+| ID | Priority | Requirement | Acceptance Criteria |
 |---|---|---|---|
-| PERF-001 | SHOULD | Обычный успешный login (password + TOTP) должен обслуживаться с p95 не более 500 мс при целевой нагрузке 20 запросов/с. | Нагрузочный тест длительностью не менее 10 минут: p95 ≤ 500 мс, error rate ≤ 1%, при 20 RPS. |
-| PERF-002 | SHOULD | Forward-auth проверка действующей сессии должна иметь p95 не более 100 мс при 50 запросах/с. | Нагрузочный тест длительностью не менее 10 минут: p95 ≤ 100 мс, error rate ≤ 1%, при 50 RPS. |
-| PERF-003 | SHOULD | Rate limiting должен сохранять доступность легитимных запросов при одновременной атаке перебором. | Тест подаёт не менее 100 RPS невалидных credential и 1 валидный запрос; валидный запрос не получает более 5 с дополнительной задержки, а сервис не исчерпывает память. |
-| PERF-004 | SHOULD | Время старта сервиса в offline-среде должно быть не более 30 секунд после запуска контейнера при исправной БД и ключе. | Пять последовательных запусков: каждый readiness становится healthy ≤ 30 с. |
-| PERF-005 | SHOULD | Потребление памяти idle-инстансом должно быть не более 512 MB, не считая reverse proxy и БД. | Измерение после 5 минут idle и после smoke test; RSS ≤ 512 MB без OOM. |
+| PERF-001 | SHOULD | A typical successful login (password + TOTP) should be processed with a p95 of no more than 500 ms at a target load of 20 requests per second. | Load test lasting at least 10 minutes: p95 ≤ 500 ms, error rate ≤ 1%, at 20 RPS. |
+| PERF-002 | SHOULD | A forward-auth check of an active session should have a p95 of no more than 100 ms at 50 requests per second. | Load test lasting at least 10 minutes: p95 ≤ 100 ms, error rate ≤ 1%, at 50 RPS. |
+| PERF-003 | SHOULD | Rate limiting should ensure that legitimate requests remain accessible during a concurrent brute-force attack. | The test sends at least 100 RPS of invalid credentials and 1 valid request; the valid request experiences no more than 5 seconds of additional delay, and the service does not run out of memory. |
+| PERF-004 | SHOULD | The service startup time in an offline environment must not exceed 30 seconds after the container is launched, provided the database and key are functioning properly. | Five consecutive launches: each readiness state must become “healthy” within ≤ 30 seconds. |
+| PERF-005 | SHOULD | Memory consumption by an idle instance must not exceed 512 MB, excluding the reverse proxy and the database. | Measurement taken after 5 minutes of idle time and after a smoke test; RSS ≤ 512 MB without OOM. |
 
-## 8. Матрица трассируемости
+## 8. Traceability Matrix
 
-| Цель/задача proposal | Требования |
+| Proposal Goal/Objective | Requirements |
 |---|---|
-| Логин, пароль и TOTP | FR-001–FR-005, SEC-002, PERF-001 |
-| QR enrollment, recovery и reset | FR-003, FR-006, FR-009, SEC-003 |
-| Защита секретов и перебора | FR-002, SEC-002–SEC-005, SEC-007, SEC-009 |
-| RBAC и неизменяемый аудит | FR-008–FR-010, SEC-006, SEC-008, NFR-005 |
-| REST и forward-auth | API-001–API-005, NFR-007, PERF-002 |
-| Изолированное развёртывание | SEC-001, NFR-001–NFR-006, PERF-004 |
-| Тестирование и производительность | NFR-008–NFR-010, PERF-001–PERF-005 |
-| Будущие OIDC/WebAuthn/LDAP | API-007, NFR-010 и ADR-003/ADR-004 |
+| Username, Password, and TOTP | FR-001–FR-005, SEC-002, PERF-001 |
+| QR enrollment, recovery, and reset | FR-003, FR-006, FR-009, SEC-003 |
+| Protection of Secrets and Brute-Force Attacks | FR-002, SEC-002–SEC-005, SEC-007, SEC-009 |
+| RBAC and Immutable Auditing | FR-008–FR-010, SEC-006, SEC-008, NFR-005 |
+| REST and forward-auth | API-001–API-005, NFR-007, PERF-002 |
+| Isolated Deployment | SEC-001, NFR-001–NFR-006, PERF-004 |
+| Testing and Performance | NFR-008–NFR-010, PERF-001–PERF-005 |
+| Future OIDC/WebAuthn/LDAP | API-007, NFR-010, and ADR-003/ADR-004 |
 
-## 9. Условия приёма MVP
+## 9. MVP Acceptance Criteria
 
-MVP считается соответствующим спецификации, если:
+An MVP is considered to meet the specifications if:
 
-1. все требования с приоритетом **MUST** имеют реализованный тест или воспроизводимый приёмочный сценарий;
-2. функциональные сценарии enrollment, login, повторный TOTP, recovery, lockout, admin reset и forward-auth проходят в изолированной тестовой сети;
-3. security-тесты не выявляют plaintext credentials, обход RBAC, replay принятого кода, утечку секретов в логах или принятие spoofed identity headers;
-4. обязательные требования автономного развёртывания выполняются без внешнего интернета;
-5. требования **SHOULD** и **COULD**, реализованные к моменту демонстрации, дополнительно проверяются по своим критериям приёма;
-6. результаты тестов, конфигурация стенда и известные отклонения фиксируются в отдельном отчёте о тестировании.
+1. All requirements with a **MUST** priority have an implemented test or a reproducible acceptance test scenario;
+2. The functional scenarios for enrollment, login, TOTP renewal, recovery, lockout, admin reset, and forward authentication are run on an isolated test network;
+3. Security tests do not reveal plaintext credentials, RBAC bypasses, replay of accepted codes, leaks of secrets in logs, or acceptance of spoofed identity headers;
+4. The mandatory requirements for standalone deployment are met without an external Internet connection;
+5. The **SHOULD** and **COULD** requirements, which have been implemented by the time of the demonstration, are additionally verified against their acceptance criteria;
+6. Test results, the test bench configuration, and known deviations are documented in a separate test report.

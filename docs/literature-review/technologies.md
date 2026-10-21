@@ -1,80 +1,80 @@
-# Сравнение технологий и архитектурные решения
+﻿# Comparison of Technologies and Architectural Solutions
 
-## Контекст выбора
+## Context of the Choice
 
-- сервис должен работать полностью внутри изолированной сети без облачных каналов;
-- MVP включает логин и пароль, TOTP, резервные коды, RBAC, аудит и HTTPS с внутренним CA;
-- интеграция должна поддерживать REST API и forward-auth для обратного прокси;
-- развёртывание должно быть простым и воспроизводимым в Docker или офлайн-установщике;
-- TOTP-секреты должны шифроваться ключом, который хранится отдельно от базы;
-- OIDC, LDAP/AD и WebAuthn являются дополнительными направлениями, а не обязательными зависимостями MVP.
+- The service must operate entirely within an isolated network without any cloud-based channels;
+- The MVP includes a username and password, TOTP, backup codes, RBAC, auditing, and HTTPS with an internal CA;
+- The integration must support REST API and forward-auth for reverse proxy;
+- Deployment must be simple and reproducible in Docker or via an offline installer;
+- TOTP secrets must be encrypted with a key stored separately from the database;
+- OIDC, LDAP/AD, and WebAuthn are optional features, not mandatory dependencies for the MVP.
 
-Оценка «высокая/средняя/низкая» означает пригодность именно для этого проекта, а не общую популярность технологии.
+A “high/medium/low” rating indicates suitability specifically for this project, not the technology's overall popularity.
 
-## 1. Серверная платформа
+## 1. Server Platform
 
-Рассматриваются FastAPI, Django и Go с HTTP-фреймворком (например, Gin или Chi).
+We will consider FastAPI, Django, and Go with an HTTP framework (such as Gin or Chi).
 
-| Критерий | FastAPI | Django | Go |
+| Criterion | FastAPI | Django | Go |
 |---|---|---|---|
-| Реализация REST API | Высокая: типизация, OpenAPI и валидация входят в типичный стек FastAPI ([docs](https://fastapi.tiangolo.com/)) | Высокая через Django REST Framework, но он добавляет отдельный слой ([DRF](https://www.django-rest-framework.org/)) | Высокая, но маршруты, схемы и OpenAPI обычно собираются дополнительными библиотеками |
-| Безопасность и зрелость | Высокая при использовании проверенных библиотек; ответственность за MFA/RBAC остаётся в проекте | Высокая: зрелые middleware, ORM, CSRF и auth-компоненты ([security](https://docs.djangoproject.com/en/stable/topics/security/)) | Высокая на уровне языка и стандартной библиотеки, но больше инфраструктурного кода нужно написать самостоятельно ([net/http](https://pkg.go.dev/net/http)) |
-| Простота MVP | Высокая: небольшой async/sync сервис и явные схемы | Средняя: встроенные admin/auth полезны, но Django-проект обычно шире необходимого | Средняя: один бинарник удобен, но разработка CRUD, миграций и админских функций дольше |
-| Офлайн-развёртывание | Высокая: зависимости можно зафиксировать в wheel-кэше и контейнере | Высокая, но пакет тяжелее и требует больше настроек | Очень высокая после сборки: один статический бинарник снижает runtime-зависимости |
-| Совместимость с проектом | Высокая: удобно реализовать REST, forward-auth, OpenAPI и криптографические сервисы | Средняя: сильный монолитный стек избыточен для узкого MFA-сервиса | Средняя: хорош для высоконагруженного gateway, но не нужен для ожидаемого масштаба |
+| REST API implementation | High: typing, OpenAPI, and validation are part of the typical FastAPI stack ([docs](https://fastapi.tiangolo.com/)) | High via Django REST Framework, but it adds a separate layer ([DRF](https://www.django-rest-framework.org/)) | High, but routes, schemas, and OpenAPI are typically handled by additional libraries |
+| Security and Maturity | High when using proven libraries; responsibility for MFA/RBAC remains with the project | High: mature middleware, ORM, CSRF, and auth components ([security](https://docs.djangoproject.com/en/stable/topics/security/)) | High at the language and standard library level, but more infrastructure code needs to be written from scratch ([net/http](https://pkg.go.dev/net/http)) |
+| MVP Simplicity | High: a small async/sync service and explicit schemas | Medium: built-in admin/auth features are useful, but a Django project is usually more extensive than necessary | Medium: a single binary is convenient, but developing CRUD, migrations, and admin functions takes longer |
+| Offline Deployment | High: dependencies can be fixed in the wheel cache and container | High, but the package is heavier and requires more configuration | Very high after building: a single static binary reduces runtime dependencies |
+| Project Compatibility | High: Easy to implement REST, forward authentication, OpenAPI, and cryptographic services | Medium: A robust monolithic stack is overkill for a narrow-scope MFA service | Medium: Good for a high-traffic gateway, but not necessary for the expected scale |
 
-**Выбор: FastAPI.** Он даёт короткий путь к типизированному REST API, OpenAPI и проверке входных данных, сохраняя небольшой объём приложения. Django остаётся разумным вариантом для большой панели управления, а Go — для отдельного высоконагруженного gateway, но оба варианта увеличивают стоимость MVP. Асинхронность не должна использоваться автоматически: операции с базой и криптографией должны выполняться через проверенные синхронные или вынесенные механизмы, чтобы не получить блокировку event loop.
+**Choice: FastAPI.** It provides a quick path to a typed REST API, OpenAPI, and input validation, while keeping the application size small. Django remains a reasonable choice for a large admin panel, while Go is suitable for a separate, high-traffic gateway; however, both options increase the cost of the MVP. Asynchronous operations should not be used automatically: database and cryptographic operations must be performed using proven synchronous or external mechanisms to avoid blocking the event loop.
 
-## 2. Хранилище данных
+## 2. Data Storage
 
-Сравниваются PostgreSQL и SQLite. Обе СУБД работают локально и не требуют интернета; выбор определяется размером установки, конкуренцией записи и операционными требованиями.
+PostgreSQL and SQLite are compared. Both DBMSs run locally and do not require an internet connection; the choice depends on the size of the installation, write contention, and operating system requirements.
 
-| Критерий | PostgreSQL | SQLite |
+| Criterion | PostgreSQL | SQLite |
 |---|---|---|
-| Офлайн-работа | Высокая: сервер размещается в LAN и не требует внешних сервисов ([docs](https://www.postgresql.org/docs/)) | Очень высокая: встроенная файловая БД без отдельного сервера ([about](https://www.sqlite.org/about.html)) |
-| Конкурентные запросы и аудит | Высокая: MVCC и отдельный сервер лучше подходят для параллельных входов и журнала | Средняя: WAL улучшает чтение, но запись остаётся ограниченным ресурсом ([WAL](https://www.sqlite.org/wal.html)) |
-| Развёртывание | Средняя: нужен отдельный контейнер, volume, backup и миграции | Очень высокая: один файл и минимум сервисов |
-| Надёжность резервирования | Высокая: штатные backup/replication инструменты | Средняя/высокая для одной ноды при корректном online backup ([backup](https://www.sqlite.org/backup.html)) |
-| Масштабирование | Высокая для нескольких экземпляров сервиса | Низкая для горизонтального масштабирования и общего сетевого файла |
-| Соответствие MVP | Средняя: избыточна для одной небольшой установки, но лучше при высокой нагрузке | Высокая: минимизирует зависимости и подходит для автономного single-node deployment |
+| Offline operation | High: The server is hosted on the LAN and does not require external services ([docs](https://www.postgresql.org/docs/)) | Very high: Built-in file-based database without a separate server ([about](https://www.sqlite.org/about.html)) |
+| Concurrent Requests and Auditing | High: MVCC and a separate server are better suited for concurrent reads and the log | Medium: WAL improves read performance, but write operations remain a limited resource ([WAL](https://www.sqlite.org/wal.html)) |
+| Deployment | Medium: Requires a separate container, volume, backup, and migration | Very high: A single file and a minimum of services |
+| Backup Reliability | High: built-in backup/replication tools | Medium/high for a single node with proper online backup ([backup](https://www.sqlite.org/backup.html)) |
+| Scalability | High for multiple service instances | Low for horizontal scaling and a shared network file |
+| MVP Compliance | Medium: Overkill for a single small installation, but better for high-load scenarios | High: Minimizes dependencies and is suitable for a standalone single-node deployment |
 
-**Выбор: SQLite для MVP.** Требуемый сценарий — один автономный сервис во внутренней сети; SQLite уменьшает поверхность развёртывания и не требует отдельного database-сервера. База должна находиться на локальном защищённом томе, использовать WAL/транзакции, регулярный backup и миграции. PostgreSQL должен оставаться поддерживаемой опцией для нескольких экземпляров, высокой конкуренции, централизованного резервирования или будущего экспорта аудита. Ключ шифрования TOTP-секретов не хранится в SQLite.
+**Choice: SQLite for MVP.** The required scenario is a single standalone service on the internal network; SQLite reduces the deployment footprint and does not require a separate database server. The database must reside on a local, secure volume and use WAL/transactions, regular backups, and migrations. PostgreSQL should remain a supported option for multiple instances, high concurrency, centralized backup, or future audit export. The encryption key for TOTP secrets is not stored in SQLite.
 
-## 3. Способ интеграции
+## 3. Integration Method
 
-Рассматриваются REST API, OIDC и forward-auth. Они не являются полностью взаимоисключающими: REST и forward-auth входят в MVP, а OIDC может быть добавлен позже.
+REST APIs, OIDC, and forward authentication is discussed. These are not entirely mutually exclusive: REST and forward authentication are part of the MVP, while OIDC can be added later.
 
-| Критерий | REST API | OIDC | Forward-auth |
+| Criterion | REST API | OIDC | Forward-auth |
 |---|---|---|---|
-| Основной сценарий | Прямой вызов внутренним приложением | Федеративный login/SSO и claims | Проверка запроса reverse proxy перед upstream |
-| Офлайн-работа | Высокая: внутренний HTTP endpoint | Высокая при локальном IdP, но нужны issuer, keys и client configuration | Очень высокая: proxy и auth service работают внутри LAN |
-| Сложность клиента | Средняя: приложение само обрабатывает сессию/ошибки | Высокая: discovery, redirect URI, state/nonce, token validation | Низкая для приложения за Nginx, но высокая для корректной настройки trusted headers |
-| Безопасность | Зависит от mTLS/API key, scopes и rate limiting | Сильная модель токенов, но больше ключей и trust relationships ([OIDC](https://openid.net/specs/openid-connect-core-1_0.html)) | Минимальный протокол допуска, но критичны доверие к proxy и очистка forwarded headers |
-| Покрытие MVP | Да | Дополнительная цель | Да |
-| Совместимость | Внутренние приложения и автоматизация | Много приложений, которым нужен стандартный IdP | Nginx и другие reverse proxies |
+| Primary Scenario | Direct call by an internal application | Federated login/SSO and claims | Reverse proxy request validation before upstream |
+| Offline Operation | High: internal HTTP endpoint | High when using a local IdP, but requires an issuer, keys, and client configuration | Very high: proxy and auth service operate within the LAN |
+| Client complexity | Medium: the application handles sessions and errors on its own | High: discovery, redirect URI, state/nonce, token validation | Low for an application running behind Nginx, but high for correctly configuring trusted headers |
+| Security | Depends on mTLS/API key, scopes, and rate limiting | Strong token model, but more keys and trust relationships ([OIDC](https://openid.net/specs/openid-connect-core-1_0.html)) | Minimal authorization protocol, but trust in the proxy and cleaning of forwarded headers are critical |
+| MVP coverage | Yes | Additional goal | Yes |
+| Compatibility | Internal Applications and Automation | Many applications that require a standard IdP | Nginx and other reverse proxies |
 
-**Выбор: REST API и forward-auth в MVP; OIDC — расширение.** REST нужен для управления пользователями, подключения 2FA и интеграции приложений. Forward-auth закрывает практический сценарий защиты внутренних web-приложений без встраивания MFA в каждое приложение. OIDC не отвергается: он станет следующим слоем для федерации, но его нельзя делать обязательной зависимостью первой офлайн-версии из-за большей конфигурационной и криптографической поверхности.
+**Choice: REST API and forward-auth in the MVP; OIDC as an extension.** REST is needed for user management, 2FA setup, and application integration. Forward-auth addresses the practical scenario of securing internal web applications without embedding MFA into every application. OIDC is not being ruled out: it will become the next layer for federation, but it cannot be made a mandatory dependency for the first offline version due to its larger configuration and cryptographic attack surface.
 
-## 4. Второй фактор
+## 4. Second Factor
 
-Сравниваются TOTP и WebAuthn.
+TOTP and WebAuthn are compared.
 
-| Критерий | TOTP | WebAuthn |
+| Criterion | TOTP | WebAuthn |
 |---|---|---|
-| Офлайн-работа пользователя | Высокая: приложение-аутентификатор генерирует код без сети | Возможна внутри LAN, но нужны HTTPS, корректный origin и совместимый authenticator |
-| Защита от фишинга | Средняя: введённый код можно перехватить | Высокая: credential связан с origin и используется challenge-response |
-| Сложность внедрения | Низкая/средняя: RFC 6238, QR enrollment и time window | Высокая: challenge, RP ID, attestation/assertion, browser/device compatibility |
-| Восстановление | Резервные одноразовые коды и административный reset | Нужен запасной authenticator или recovery flow |
-| Соответствие MVP | Высокое | Среднее |
+| Offline User Operation | High: The authenticator app generates a code without an internet connection | Possible within a LAN, but requires HTTPS, a valid origin, and a compatible authenticator |
+| Phishing Protection | Medium: The entered code can be intercepted | High: The credential is tied to the origin and uses a challenge-response mechanism |
+| Implementation complexity | Low/medium: RFC 6238, QR enrollment, and time window | High: challenge, RP ID, attestation/assertion, browser/device compatibility |
+| Recovery | Backup one-time codes and administrative reset | Need a backup authenticator or recovery flow |
+| MVP Compliance | High | Medium |
 
-**Выбор: TOTP для MVP; WebAuthn как расширение.** TOTP соответствует цели простого автономного сервиса. Требования безопасности: шифрование секретов, окно времени, rate limiting и запрет повторного шага. WebAuthn следует добавить после стабилизации TOTP, сохранив возможность повысить фишингоустойчивость без изменения базового deployment.
+**Choice: TOTP for MVP; WebAuthn as an extension.** TOTP meets the goal of a simple, standalone service. Security requirements: encryption of secrets, time window, rate limiting, and prohibition of retries. WebAuthn should be added after TOTP has stabilized, while preserving the ability to enhance phishing resistance without changing the underlying deployment.
 
-## Итог решений
+## Summary of Decisions
 
-| Область | Решение MVP | Отложенная/масштабируемая альтернатива |
+| Area | MVP Solution | Deferred/Scalable Alternative |
 |---|---|---|
-| Backend | FastAPI | Django для крупной admin-платформы или Go для отдельного gateway |
-| Database | SQLite | PostgreSQL для multi-instance и высокой конкуренции |
-| Integration | REST + forward-auth | OIDC для федерации |
-| Second factor | TOTP | WebAuthn для фишингоустойчивого сценария |
+| Backend | FastAPI | Django for a large admin platform or Go for a separate gateway |
+| Database | SQLite | PostgreSQL for multi-instance and high concurrency |
+| Integration | REST + forward-auth | OIDC for federation |
+| Second factor | TOTP | WebAuthn for a phishing-resistant scenario |
 

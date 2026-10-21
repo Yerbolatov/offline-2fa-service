@@ -1,45 +1,44 @@
-# ADR-04: TOTP как основной второй фактор MVP
+# ADR-04: TOTP as the MVP's Primary Second Factor
 
-- **Статус:** Принято для MVP
-- **Дата:** 2026-10-17
+- **Status:** Accepted for the MVP
+- **Date:** 2026-10-17
 
-## Контекст
+## Context
 
-Проект должен работать в изолированной сети, где нет SMS, push, внешнего identity provider или мобильного приложения проекта. Пользователи могут использовать существующие offline-authenticator apps. Требуется TOTP, QR enrollment, резервные коды, допуск расхождения часов и запрет повторного использования кода; WebAuthn указан как дополнительная цель.
+The project must operate in an isolated network with no SMS, push, external identity provider, or project mobile application. Users can use existing offline authenticator apps. TOTP, QR enrollment, recovery codes, clock-skew tolerance, and code-reuse prevention are required; WebAuthn is an additional goal.
 
-Рассматривались TOTP и WebAuthn. TOTP стандартизирован RFC 6238 и не требует постоянного сетевого соединения. WebAuthn сильнее против фишинга, но требует HTTPS, корректного origin/RP ID, совместимого браузера и authenticator.
+TOTP and WebAuthn were considered. TOTP is standardized by RFC 6238 and does not require a persistent network connection. WebAuthn provides stronger phishing resistance, but requires HTTPS, a correct origin/RP ID, a compatible browser, and an authenticator.
 
-## Решение
+## Decision
 
-Выбрать **TOTP по RFC 6238** основным вторым фактором MVP. Реализовать:
+Choose **TOTP according to RFC 6238** as the MVP's primary second factor. Implement:
 
-- enrollment через QR-код;
-- зашифрованное хранение секрета AES-256-GCM с внешним ключом;
-- внутренний NTP и явно настраиваемое ограниченное окно времени;
-- атомарное сохранение использованного временного шага;
-- rate limiting и блокировку перебора;
-- одноразовые резервные коды и административный reset;
-- тесты по векторам RFC 6238 и отрицательные security-сценарии.
+- enrollment through a QR code;
+- encrypted AES-256-GCM secret storage with an external key;
+- internal NTP and an explicitly configurable, limited time window;
+- atomic storage of the used time step;
+- rate limiting and brute-force lockout;
+- one-time recovery codes and administrative reset;
+- RFC 6238 vector tests and negative security scenarios.
 
-WebAuthn подготовить как расширение после стабилизации TOTP и HTTPS/origin конфигурации.
+Prepare WebAuthn as an extension after TOTP and HTTPS/origin configuration have stabilized.
 
-## Последствия
+## Consequences
 
-Положительные:
+Benefits:
 
-- работает без интернета и без внешнего провайдера;
-- пользователю не требуется новое мобильное приложение;
-- проще enrollment, recovery и эксплуатация в изолированной сети;
-- хорошо соответствует объёму MVP и существующей документации проекта.
+- works without Internet access or an external provider;
+- users do not need a new mobile application;
+- enrollment, recovery, and operation in an isolated network are simpler;
+- fits the MVP scope and the project's existing documentation well.
 
-Ограничения:
+Limitations:
 
-- TOTP использует общий секрет и не является полностью фишингоустойчивым;
-- рассинхронизация времени и потеря устройства требуют recovery policy;
-- резервные коды становятся чувствительными credentials и должны храниться в виде хешей/одноразовых записей;
-- WebAuthn остаётся необходимым направлением для усиления защиты от phishing.
+- TOTP uses a shared secret and is not fully phishing-resistant;
+- clock drift and device loss require a recovery policy;
+- recovery codes are sensitive credentials and must be stored as hashes/one-time records;
+- WebAuthn remains an important direction for stronger phishing protection.
 
-## Альтернатива
+## Alternative
 
-**WebAuthn/FIDO2** даёт origin-bound public-key credentials и лучшую защиту от фишинга, но увеличивает требования к внутреннему CA, browser/device support, RP ID и восстановлению. Поэтому он выбран как дополнительный фактор, а не как обязательная зависимость первой версии.
-
+**WebAuthn/FIDO2** provides origin-bound public-key credentials and better phishing protection, but increases requirements for the internal CA, browser/device support, RP ID, and recovery. It is therefore selected as an additional factor rather than a mandatory dependency of the first version.
